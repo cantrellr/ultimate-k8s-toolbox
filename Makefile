@@ -264,6 +264,15 @@ create-scripts:
 	@echo "     export NAMESPACE=\"toolbox\"" >> $(BUNDLE_DIR)/README.txt
 	@echo "  2. Run: cd scripts && ./deploy-offline.sh" >> $(BUNDLE_DIR)/README.txt
 	@echo "" >> $(BUNDLE_DIR)/README.txt
+	@echo "Custom CA Certificates:" >> $(BUNDLE_DIR)/README.txt
+	@echo "  To trust internal CA certificates, provide paths during deployment:" >> $(BUNDLE_DIR)/README.txt
+	@echo "    ./deploy-offline.sh --root-ca /path/to/root-ca.crt \\\\" >> $(BUNDLE_DIR)/README.txt
+	@echo "                        --subordinate-ca /path/to/intermediate-ca.crt" >> $(BUNDLE_DIR)/README.txt
+	@echo "" >> $(BUNDLE_DIR)/README.txt
+	@echo "  The toolbox uses an init container to run update-ca-certificates" >> $(BUNDLE_DIR)/README.txt
+	@echo "  as root, ensuring all tools (curl, wget, Python, etc.) trust" >> $(BUNDLE_DIR)/README.txt
+	@echo "  your internal CA certificates." >> $(BUNDLE_DIR)/README.txt
+	@echo "" >> $(BUNDLE_DIR)/README.txt
 	@echo "For detailed instructions, see docs/" >> $(BUNDLE_DIR)/README.txt
 	@echo "✓ Created README.txt"
 	@echo ""

@@ -410,10 +410,16 @@ show_deployment_info() {
     echo ""
     
     if [ "$ENABLE_CA" = true ]; then
-        echo "CA certificates are mounted at: /etc/ssl/custom-ca/"
-        echo "To verify CA trust:"
-        echo "  kubectl -n $NAMESPACE exec -it deploy/${RELEASE_NAME}-ultimate-k8s-toolbox -- \\"
-        echo "    cat /etc/ssl/custom-ca/ca-bundle.crt"
+        echo "CA certificates:"
+        echo "  - Mounted at: /etc/ssl/custom-ca/"
+        echo "  - Trusted in: /etc/ssl/certs/ca-certificates.crt"
+        echo ""
+        echo "  The init container ran 'update-ca-certificates' as root to add your"
+        echo "  CA certificates to the system trust store. All tools (curl, wget,"
+        echo "  Python requests, mongosh, etc.) will trust these certificates."
+        echo ""
+        echo "  To verify CA trust inside the pod:"
+        echo "    curl -v https://your-internal-service/"
         echo ""
     fi
 }

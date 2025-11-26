@@ -31,6 +31,76 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.customCA.enabled }}
+      # Init container runs as root to update the system CA trust store
+      initContainers:
+      - name: update-ca-trust
+        image: {{ include "ultimate-k8s-toolbox.image" . }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        command:
+          - /bin/bash
+          - -c
+          - |
+            set -e
+            echo "[CA-TRUST] Starting CA certificate installation..."
+            
+            # Check if custom CA certificates are mounted
+            CA_SOURCE="{{ .Values.customCA.mountPath | default "/etc/ssl/custom-ca" }}"
+            CA_TARGET="/usr/local/share/ca-certificates/custom"
+            
+            if [ ! -d "$CA_SOURCE" ] || [ -z "$(ls -A $CA_SOURCE 2>/dev/null)" ]; then
+              echo "[CA-TRUST] No custom CA certificates found in $CA_SOURCE"
+              # Still copy existing trust store to shared volume (dereference symlinks)
+              cp -rL /etc/ssl/certs/* /shared-ca-certs/ 2>/dev/null || true
+              exit 0
+            fi
+            
+            # Create target directory
+            mkdir -p "$CA_TARGET"
+            
+            # Copy certificates from mount to system CA directory
+            CERTS_INSTALLED=0
+            for cert in "$CA_SOURCE"/*.crt "$CA_SOURCE"/*.pem; do
+              if [ -f "$cert" ]; then
+                cert_name=$(basename "$cert")
+                # Validate certificate format
+                if openssl x509 -in "$cert" -noout 2>/dev/null; then
+                  target_name="${cert_name%.*}.crt"
+                  cp "$cert" "$CA_TARGET/$target_name"
+                  echo "[CA-TRUST] Installed: $cert_name"
+                  CERTS_INSTALLED=$((CERTS_INSTALLED + 1))
+                else
+                  echo "[CA-TRUST] Skipping invalid certificate: $cert_name"
+                fi
+              fi
+            done
+            
+            if [ $CERTS_INSTALLED -gt 0 ]; then
+              echo "[CA-TRUST] Running update-ca-certificates --fresh --verbose..."
+              update-ca-certificates --fresh --verbose
+              echo "[CA-TRUST] CA trust store updated with $CERTS_INSTALLED custom certificate(s)"
+            else
+              echo "[CA-TRUST] No valid certificates found to install"
+            fi
+            
+            # Copy the updated trust store to shared volume for main container
+            # Use -L to dereference symlinks (critical: symlinks point to paths that won't exist in main container)
+            cp -rL /etc/ssl/certs/* /shared-ca-certs/
+            echo "[CA-TRUST] Trust store copied to shared volume (symlinks dereferenced)"
+        volumeMounts:
+        - name: custom-ca-certs
+          mountPath: {{ .Values.customCA.mountPath | default "/etc/ssl/custom-ca" }}
+          readOnly: true
+        - name: shared-ca-certs
+          mountPath: /shared-ca-certs
+      {{- end }}
       containers:
       - name: toolbox
         image: {{ include "ultimate-k8s-toolbox.image" . }}
@@ -80,6 +150,9 @@ spec:
         - name: custom-ca-certs
           mountPath: {{ .Values.customCA.mountPath | default "/etc/ssl/custom-ca" }}
           readOnly: true
+        - name: shared-ca-certs
+          mountPath: /etc/ssl/certs
+          readOnly: true
         {{- end }}
         {{- with .Values.container.volumeMounts }}
           {{- toYaml . | nindent 10 }}
@@ -90,6 +163,8 @@ spec:
         secret:
           secretName: {{ .Values.customCA.secretName | default "toolbox-ca-certs" }}
           optional: true
+      - name: shared-ca-certs
+        emptyDir: {}
       {{- end }}
       {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}

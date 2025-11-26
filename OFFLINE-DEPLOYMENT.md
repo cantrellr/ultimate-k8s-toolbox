@@ -516,10 +516,18 @@ customCA:
 
 ### How CA Trust Works in the Pod
 
-1. **Mount**: CA certificates are mounted from the Kubernetes secret
-2. **Copy**: The `update-ca-trust.sh` script copies certs to `/usr/local/share/ca-certificates/`
-3. **Update**: `update-ca-certificates` regenerates the system trust store
-4. **Trust**: All tools (curl, openssl, mongosh, Python) automatically trust the CAs
+The toolbox uses an **init container** to properly install CA certificates in the system trust store:
+
+1. **Init Container (runs as root)**:
+   - Copies CA certificates from the mounted secret to `/usr/local/share/ca-certificates/custom/`
+   - Runs `update-ca-certificates --fresh --verbose` (requires root)
+   - Copies the updated `/etc/ssl/certs/` to a shared emptyDir volume
+
+2. **Main Container (runs as non-root)**:
+   - Mounts the shared volume at `/etc/ssl/certs/` (read-only)
+   - All tools (curl, wget, openssl, Python requests, mongosh) automatically trust the custom CAs
+
+This approach is necessary because `update-ca-certificates` requires root privileges, but the main container runs as a non-root user for security.
 
 ### Verify CA Trust in Pod
 
@@ -527,18 +535,20 @@ customCA:
 # Exec into the pod
 kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- bash
 
-# List mounted certificates
+# Check init container logs (to verify CA installation)
+kubectl logs deploy/my-toolbox-ultimate-k8s-toolbox -c update-ca-trust -n toolbox
+
+# List mounted certificates (original)
 ls -la /etc/ssl/custom-ca/
 
-# Run CA trust update (if not already done)
-/usr/local/bin/update-ca-trust.sh
-
-# Verify trust store
-ls /usr/local/share/ca-certificates/
+# Verify certificates are in the trust store
+ls /etc/ssl/certs/ | grep -E "root-ca|subordinate-ca"
 
 # Test connection to internal service
-curl https://internal-service.company.com
-openssl s_client -connect internal-service.company.com:443
+curl -v https://internal-service.company.com
+
+# Verify with openssl
+echo | openssl s_client -connect internal-service.company.com:443 2>/dev/null | grep "Verify return code"
 
 # Verify MongoDB connection with TLS
 mongosh "mongodb://mongo.internal.company.com:27017/?tls=true"
@@ -566,21 +576,37 @@ The script:
 ### Troubleshooting CA Trust
 
 ```bash
-# Check if certificates are mounted
+# 1. Check if init container ran successfully
+kubectl logs deploy/my-toolbox-ultimate-k8s-toolbox -c update-ca-trust -n toolbox
+
+# 2. Check if certificates are mounted from secret
 kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- ls -la /etc/ssl/custom-ca/
 
-# Verify certificate content
-kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
-  openssl x509 -in /etc/ssl/custom-ca/root-ca.crt -text -noout
+# 3. Check if certificates are in the trust store (from shared volume)
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- ls /etc/ssl/certs/ | grep -E "root-ca|subordinate-ca|ca-bundle"
 
-# Check system trust store
+# 4. Verify certificate content
 kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
-  ls /etc/ssl/certs/ | grep -i custom
+  openssl x509 -in /etc/ssl/certs/root-ca.pem -noout -subject -issuer
 
-# Test with verbose output
+# 5. Test HTTPS connection with verbose output
 kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
   curl -v https://internal-service.company.com
+
+# 6. Check if secret exists and has correct data
+kubectl get secret toolbox-ca-certs -n toolbox -o yaml
+
+# 7. Verify certificate chain with openssl
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
+  bash -c "echo | openssl s_client -connect internal-service:443 2>/dev/null | grep 'Verify return code'"
 ```
+
+**Common Issues:**
+
+- **Init container not running**: Ensure `customCA.enabled=true` in Helm values
+- **Certificates not in trust store**: Check init container logs for errors
+- **"unable to get issuer certificate"**: Missing intermediate CA in the chain - add it to the secret
+- **Pod stuck in Init**: Check if the CA secret exists and has valid certificate files
 
 ---
 
