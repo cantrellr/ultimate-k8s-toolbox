@@ -1,15 +1,37 @@
 apiVersion: v2
 name: ultimate-k8s-toolbox
-description: Ultimate Kubernetes toolbox pod with MongoDB tools, kubectl, tridentctl, networking utilities and more
+description: |
+  A comprehensive Kubernetes administration workstation with 50+ pre-installed tools
+  for debugging, troubleshooting, and managing Kubernetes clusters. Supports air-gapped
+  deployments, custom CA certificates, and multi-architecture builds (amd64/arm64).
 type: application
-version: 0.1.0           # chart version
-appVersion: "1.0.0"      # underlying toolbox image version (informational)
+version: 1.0.0           # Chart version - follows SemVer
+appVersion: "1.0.0"      # Toolbox image version - "First Flight" release
 keywords:
   - kubernetes
   - toolbox
-  - mongodb
+  - kubectl
+  - helm
   - debugging
   - troubleshooting
+  - air-gapped
+  - offline
+  - k9s
+  - devops
+  - sre
+  - platform-engineering
 maintainers:
-  - name: Platform Team
-home: https://github.com/your-org/ultimate-k8s-toolbox
+  - name: Cantrell R
+    url: https://github.com/cantrellr
+home: https://github.com/cantrellr/ultimate-k8s-toolbox
+sources:
+  - https://github.com/cantrellr/ultimate-k8s-toolbox
+icon: https://raw.githubusercontent.com/cantrellr/ultimate-k8s-toolbox/main/docs/icon.png
+annotations:
+  artifacthub.io/license: MIT
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/signKey: |
+    fingerprint: ""
+    url: ""

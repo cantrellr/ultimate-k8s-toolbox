@@ -1,506 +1,478 @@
-# 🚀 Ultimate Kubernetes Admin Workstation - Helm Chart
+# Ultimate K8s Tool
 
-**Swiss-army knife for Kubernetes, MongoDB, Ops Manager, networking, storage, and cluster inspection**
+```
+   ╔═══════════════════════════════════════════════════════════════════════╗
+   ║                                                                       ║
+   ║   █░█ █░░ ▀█▀ █ █▀▄▀█ ▄▀█ ▀█▀ █▀▀   █▄▀ ▄▀█ █▀   ▀█▀ █▀█ █▀█ █░░      ║
+   ║   █▄█ █▄▄ ░█░ █ █░▀░█ █▀█ ░█░ ██▄   █░█ ▀▀█ ▄█   ░█░ █▄█ █▄█ █▄▄      ║
+   ║                                                                       ║
+   ║              ✈️  "First Flight" Release - v1.0.0  ✈️                 ║
+   ╚═══════════════════════════════════════════════════════════════════════╝
+```
 
-A comprehensive Helm chart for deploying a true admin workstation inside your Kubernetes cluster. Pre-loaded with 50+ operational tools for MongoDB operations, TLS debugging, networking diagnostics, storage management, and cluster inspection. Designed for both online and **offline/air-gapped environments**.
+# Ultimate Kubernetes Toolbox
 
-Built with **nerdctl + containerd** for native Kubernetes integration.
+**The comprehensive Kubernetes administration workstation**
 
-## 🎯 Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Helm](https://img.shields.io/badge/Helm-3.x-blue.svg)](https://helm.sh)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.19+-326CE5.svg?logo=kubernetes&logoColor=white)](https://kubernetes.io)
+[![GitHub release](https://img.shields.io/github/v/release/cantrellr/ultimate-k8s-toolbox)](https://github.com/cantrellr/ultimate-k8s-toolbox/releases)
 
-### Container Runtime
-- ✅ **nerdctl + containerd** - Kubernetes-native container runtime
-- ✅ **k8s.io namespace** - Direct Kubernetes image integration
-- ✅ Automated offline bundle creation with Makefile
+*50+ pre-installed tools • Air-gapped ready • Multi-architecture (amd64/arm64)*
 
-### MongoDB Operations
-- ✅ **Complete MongoDB client stack**: mongosh, mongodump, mongorestore, bsondump, mongostat, mongotop
-- ✅ **X.509 TLS debugging**: openssl, gnutls-bin, certificate verification tools
-- ✅ **CA trust integration**: Auto-trust custom CAs mounted at /tls/ca.crt
+[Quick Start](#-quick-start) •
+[Tools](#-included-tools) •
+[Documentation](#-documentation) •
+[Contributing](CONTRIBUTING.md)
 
-### Kubernetes Administration
-- ✅ **Full K8s tooling**: kubectl v1.31.4, Helm 3, jq, yq, envsubst
-- ✅ **Cluster inspection**: Complete pod/service/deployment debugging
-- ✅ **Storage management**: tridentctl (NetApp Trident), NFS utilities
+</div>
 
-### Networking & Diagnostics
-- ✅ **Complete network stack**: dig, ping, traceroute, netcat, tcpdump, nmap, curl, wget
-- ✅ **Performance testing**: iperf3 for bandwidth analysis
-- ✅ **TLS verification**: Certificate chain inspection and validation
+---
 
-### Development Tools
-- ✅ **Python 3.12**: With pymongo, kubernetes, pyyaml, requests, jinja2
-- ✅ **System debugging**: htop, strace, lsof, iotop, psmisc
-- ✅ **File operations**: rsync, git, zip, tar, gzip
+## 🎯 Overview
 
-### Deployment Flexibility
-- ✅ **Offline/Air-gapped deployment support** via `global.imageRegistry`
-- ✅ Configurable namespace deployment
-- ✅ Flexible service account management (create new or reuse existing)
-- ✅ Image pull secrets for private registries
-- ✅ Resource limits and requests
-- ✅ Security contexts (runAsNonRoot, capabilities)
-- ✅ Node selectors, tolerations, and affinity rules
-- ✅ Customizable environment variables and volumes
-- ✅ Optional health probes
+**Ultimate K8s Toolbox** is a Helm chart that deploys a fully-equipped Kubernetes administration workstation directly into your cluster. Think of it as a Swiss Army knife pod — pre-loaded with everything you need for debugging, troubleshooting, and managing Kubernetes environments.
 
-### Compliance & Security
-- ✅ **Software Bill of Materials (SBOM)** - Text and JSON formats
-- ✅ Complete component inventory with licenses
-- ✅ CycloneDX and SPDX-like formats
-- ✅ Automated SBOM generation with every build
-- ✅ SHA256 checksums in MANIFEST.txt
+### Why Use This?
 
-## Prerequisites
+| Scenario | Solution |
+|----------|----------|
+| 🔍 Debug pod networking issues | `tcpdump`, `netcat`, `nmap`, `dig` all pre-installed |
+| 🔐 Troubleshoot TLS/certificate problems | `openssl`, certificate verification tools, CA trust |
+| 📊 Inspect MongoDB clusters | `mongosh`, `mongodump`, `mongostat` ready to go |
+| ☸️ Manage Kubernetes resources | `kubectl`, `helm`, `k9s`, `stern` at your fingertips |
+| 🚫 Work in air-gapped environments | Full offline deployment support with internal registries |
+| 📋 Meet compliance requirements | SBOM generation, security scanning with `trivy` |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        KUBERNETES CLUSTER                                    │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │                         TOOLBOX NAMESPACE                              │  │
+│  │                                                                        │  │
+│  │   ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │   │                    TOOLBOX POD                                  │  │  │
+│  │   │  ┌───────────────────────┐  ┌────────────────────────────────┐  │  │  │
+│  │   │  │    INIT CONTAINER     │  │       MAIN CONTAINER           │  │  │  │
+│  │   │  │   update-ca-trust     │  │         toolbox                │  │  │  │
+│  │   │  │  ─────────────────    │  │  ────────────────────────────  │  │  │  │
+│  │   │  │  • Runs as root       │  │  • Runs as non-root (UID 1000) │  │  │  │
+│  │   │  │  • Updates CA trust   │  │  • 50+ pre-installed tools     │  │  │  │
+│  │   │  │  • Copies to volume   │  │  • kubectl, helm, k9s          │  │  │  │
+│  │   │  │                       │  │  • mongosh, database clients   │  │  │  │
+│  │   │  └───────────┬───────────┘  │  • Network debugging tools     │  │  │  │
+│  │   │              │              │  • Python 3.12 + packages      │  │  │  │
+│  │   │              ▼              │                                │  │  │  │
+│  │   │  ┌───────────────────────┐  │                                │  │  │  │
+│  │   │  │    SHARED VOLUME      │  │                                │  │  │  │
+│  │   │  │   shared-ca-certs     │──┤  /etc/ssl/certs/               │  │  │  │
+│  │   │  │   (emptyDir)          │  │                                │  │  │  │
+│  │   │  └───────────────────────┘  └────────────────────────────────┘  │  │  │
+│  │   │                                                                 │  │  │
+│  │   │  ┌─────────────────────────────────────────────────────────┐    │  │  │
+│  │   │  │                     VOLUMES                             │    │  │  │
+│  │   │  │  • custom-ca-certs (Secret) - Your CA certificates      │    │  │  │
+│  │   │  │  • workspace (emptyDir) - Working directory             │    │  │  │
+│  │   │  │  • Custom volumes via values.yaml                       │    │  │  │
+│  │   │  └─────────────────────────────────────────────────────────┘    │  │  │
+│  │   └─────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                        │  │
+│  │   ┌────────────────────────────────────────────────────────────────┐   │  │
+│  │   │                     SERVICE ACCOUNT                            │   │  │
+│  │   │  • Optional ClusterRole for cluster-wide access                │   │  │
+│  │   │  • Optional Role for namespace-scoped access                   │   │  │
+│  │   │  • Configurable RBAC permissions                               │   │  │
+│  │   └────────────────────────────────────────────────────────────────┘   │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚡ Quick Start
+
+### Prerequisites
 
 - Kubernetes 1.19+
-- Helm 3.0+
-- **nerdctl** (for building images) - [Installation Guide](./NERDCTL-GUIDE.md)
-- containerd (default Kubernetes runtime)
-- For offline deployments: Access to an internal container registry
+- Helm 3.x
+- kubectl configured for your cluster
 
-## 📦 Building the Toolbox Image
-
-This project uses **nerdctl + containerd** instead of Docker:
+### Online Deployment (5 minutes)
 
 ```bash
-# Build the comprehensive toolbox image
-make build-image
+# Clone the repository
+git clone https://github.com/cantrellr/ultimate-k8s-toolbox.git
+cd ultimate-k8s-toolbox
 
-# Test the image
-make test-image
+# Deploy to your cluster
+helm install toolbox ./chart -n toolbox --create-namespace
 
-# Create complete offline bundle (image + chart + scripts)
+# Access the toolbox
+kubectl exec -it -n toolbox deploy/toolbox-ultimate-k8s-toolbox -- bash
+```
+
+### Using the Quick Access Script
+
+```bash
+# Install the helper script
+./scripts/install-toolbox.sh
+
+# Now just run:
+toolbox
+```
+
+---
+
+## 📦 Included Tools
+
+<details>
+<summary><b>☸️ Kubernetes & Container Tools (15)</b></summary>
+
+| Tool | Version | Description |
+|------|---------|-------------|
+| `kubectl` | 1.31.x | Kubernetes CLI |
+| `helm` | 3.x | Kubernetes package manager |
+| `k9s` | Latest | Terminal UI for Kubernetes |
+| `kubectx/kubens` | Latest | Context and namespace switcher |
+| `stern` | Latest | Multi-pod log tailing |
+| `kustomize` | Latest | Kubernetes configuration customization |
+| `k3d` | Latest | k3s in Docker |
+| `kind` | Latest | Kubernetes in Docker |
+| `istioctl` | Latest | Istio service mesh CLI |
+| `linkerd` | Latest | Linkerd service mesh CLI |
+| `argocd` | Latest | ArgoCD CLI |
+| `flux` | Latest | Flux CD CLI |
+| `velero` | Latest | Backup and restore CLI |
+| `kubeseal` | Latest | Sealed Secrets CLI |
+| `krew` | Latest | kubectl plugin manager |
+
+</details>
+
+<details>
+<summary><b>☁️ Cloud Provider CLIs (3)</b></summary>
+
+| Tool | Version | Description |
+|------|---------|-------------|
+| `aws` | 2.x | AWS CLI |
+| `az` | Latest | Azure CLI |
+| `gcloud` | Latest | Google Cloud SDK |
+
+</details>
+
+<details>
+<summary><b>🗄️ Database Clients (5)</b></summary>
+
+| Tool | Version | Description |
+|------|---------|-------------|
+| `mongosh` | Latest | MongoDB Shell |
+| `mongodump/restore` | Latest | MongoDB backup tools |
+| `psql` | Latest | PostgreSQL client |
+| `mysql` | Latest | MySQL client |
+| `redis-cli` | Latest | Redis client |
+
+</details>
+
+<details>
+<summary><b>🌐 Network Tools (15)</b></summary>
+
+| Tool | Description |
+|------|-------------|
+| `curl` / `wget` | HTTP clients |
+| `dig` / `nslookup` / `host` | DNS tools |
+| `netcat` (nc) | Network utility |
+| `nmap` | Network scanner |
+| `tcpdump` | Packet capture |
+| `traceroute` / `mtr` | Route tracing |
+| `ping` | ICMP testing |
+| `telnet` | Telnet client |
+| `iperf3` | Bandwidth testing |
+| `ss` / `netstat` | Socket statistics |
+| `ip` / `ifconfig` | Network configuration |
+| `whois` | Domain lookup |
+| `openssl` | TLS/SSL toolkit |
+
+</details>
+
+<details>
+<summary><b>🔐 Security Tools (4)</b></summary>
+
+| Tool | Description |
+|------|-------------|
+| `trivy` | Vulnerability scanner |
+| `grype` | Vulnerability scanner |
+| `syft` | SBOM generator |
+| `openssl` | Certificate operations |
+
+</details>
+
+<details>
+<summary><b>🛠️ Development Tools (15+)</b></summary>
+
+| Tool | Description |
+|------|-------------|
+| `git` | Version control |
+| `vim` / `nano` | Text editors |
+| `jq` / `yq` | JSON/YAML processors |
+| `fzf` | Fuzzy finder |
+| `bat` | Better cat |
+| `ripgrep` (rg) | Fast grep |
+| `fd` | Fast find |
+| `htop` | Process viewer |
+| `tree` | Directory listing |
+| `tmux` | Terminal multiplexer |
+| `Python 3.12` | With pip and common packages |
+
+</details>
+
+<details>
+<summary><b>💾 Storage & Backup Tools (5)</b></summary>
+
+| Tool | Description |
+|------|-------------|
+| `rclone` | Cloud storage sync |
+| `mc` | MinIO client |
+| `restic` | Backup tool |
+| `rsync` | File synchronization |
+| `tridentctl` | NetApp Trident CLI |
+
+</details>
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [📖 QUICKSTART.md](QUICKSTART.md) | Get started in 5 minutes |
+| [🔧 TOOLS-REFERENCE.md](TOOLS-REFERENCE.md) | Complete tool documentation with examples |
+| [✈️ OFFLINE-DEPLOYMENT.md](OFFLINE-DEPLOYMENT.md) | Air-gapped deployment guide |
+| [🏗️ MAKEFILE.md](MAKEFILE.md) | Build system documentation |
+| [📋 SBOM.md](SBOM.md) | Software Bill of Materials info |
+| [🐳 NERDCTL-GUIDE.md](NERDCTL-GUIDE.md) | Container runtime guide |
+| [📝 CHANGELOG.md](CHANGELOG.md) | Version history |
+
+---
+
+## 🚀 Deployment Options
+
+### Option 1: Online Deployment
+
+For clusters with internet access:
+
+```bash
+helm install my-toolbox ./chart \
+  -n toolbox --create-namespace \
+  -f examples/values-online.yaml
+```
+
+### Option 2: Air-Gapped/Offline Deployment
+
+For restricted environments without internet:
+
+```bash
+# 1. Build offline bundle (on machine with internet)
 make offline-bundle
 
-# View configuration
-make info
+# 2. Transfer dist/offline-bundle/ to air-gapped environment
 
-# Clean up
-make clean
+# 3. Run the deployment script
+cd dist/offline-bundle
+./scripts/deploy-offline.sh \
+  --registry registry.internal:5000 \
+  --namespace toolbox
 ```
 
-For detailed nerdctl usage, see [NERDCTL-GUIDE.md](./NERDCTL-GUIDE.md)
+See [OFFLINE-DEPLOYMENT.md](OFFLINE-DEPLOYMENT.md) for detailed instructions.
 
-## Quick Start
+### Option 3: With Custom CA Certificates
 
-### Online Deployment (with Internet Access)
-
-```bash
-# Install from local chart directory
-helm install my-toolbox ./chart \
-  -f examples/values-online.yaml \
-  -n toolbox --create-namespace
-
-# Access the pod
-kubectl -n toolbox get pods
-kubectl -n toolbox exec -it deploy/my-toolbox-ultimate-k8s-toolbox -- bash
-```
-
-### Offline/Air-gapped Deployment
-
-#### Step 1: Prepare Images (from a machine with internet access)
+For environments with internal PKI:
 
 ```bash
-# Pull the toolbox image
-docker pull ultimate-k8s-toolbox:latest
-
-# Tag for your internal registry
-docker tag ultimate-k8s-toolbox:latest myregistry.local:5000/platform/ultimate-k8s-toolbox:latest
-
-# Push to internal registry
-docker push myregistry.local:5000/platform/ultimate-k8s-toolbox:latest
-```
-
-#### Step 2: Create Image Pull Secret (if needed)
-
-```bash
-kubectl create namespace toolbox
-
-kubectl create secret docker-registry regcred \
-  --docker-server=myregistry.local:5000 \
-  --docker-username=myuser \
-  --docker-password=mypass \
-  --docker-email=myemail@example.com \
+# Create CA secret
+kubectl create secret generic toolbox-ca-certs \
+  --from-file=root-ca.crt=/path/to/ca.crt \
   -n toolbox
-```
 
-#### Step 3: Deploy with Offline Values
-
-```bash
-# Edit values-offline.yaml to set your registry
-# Then install:
+# Deploy with CA enabled
 helm install my-toolbox ./chart \
-  -f examples/values-offline.yaml \
-  -n toolbox
+  -n toolbox \
+  --set customCA.enabled=true \
+  --set customCA.secretName=toolbox-ca-certs
 ```
 
-## Configuration
+---
+
+## ⚙️ Configuration
 
 ### Key Values
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `global.imageRegistry` | Registry prefix for offline deployments | `""` (Docker Hub) |
-| `global.namespaceOverride` | Override deployment namespace | `""` (use release namespace) |
-| `image.repository` | Image repository (without registry) | `ultimate-k8s-toolbox` |
-| `image.tag` | Image tag | `latest` |
-| `imagePullSecrets` | List of image pull secrets | `[]` |
-| `serviceAccount.create` | Create service account | `true` |
-| `serviceAccount.name` | Service account name (or reuse existing) | `""` |
-| `replicaCount` | Number of pod replicas | `1` |
+| `image.repository` | Image repository | `ultimate-k8s-toolbox` |
+| `image.tag` | Image tag | `1.0.0` |
+| `global.imageRegistry` | Registry for offline deployments | `""` |
+| `replicaCount` | Number of replicas | `1` |
+| `serviceAccount.create` | Create ServiceAccount | `true` |
+| `rbac.create` | Create RBAC resources | `true` |
+| `rbac.clusterRole` | Create ClusterRole (vs Role) | `true` |
+| `customCA.enabled` | Enable custom CA trust | `false` |
+| `customCA.secretName` | Secret containing CA certs | `toolbox-ca-certs` |
 | `resources.requests.cpu` | CPU request | `100m` |
 | `resources.requests.memory` | Memory request | `256Mi` |
 | `resources.limits.cpu` | CPU limit | `2` |
 | `resources.limits.memory` | Memory limit | `4Gi` |
 
-### Image Resolution Logic
-
-The chart uses the `ultimate-k8s-toolbox.image` helper to construct the full image path:
-
-**Online (no registry override):**
-```yaml
-global.imageRegistry: ""
-image.repository: "ultimate-k8s-toolbox"
-image.tag: "latest"
-# Result: ultimate-k8s-toolbox:latest
-```
-
-**Offline with simple registry:**
-```yaml
-global.imageRegistry: "myregistry.local:5000"
-image.repository: "ultimate-k8s-toolbox"
-image.tag: "latest"
-# Result: myregistry.local:5000/ultimate-k8s-toolbox:latest
-```
-
-**Offline with project path:**
-```yaml
-global.imageRegistry: "harbor.internal.com"
-image.repository: "platform/ultimate-k8s-toolbox"
-image.tag: "v1.0.0"
-# Result: harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.0
-```
-
-## Deployment Scenarios
-
-### Scenario 1: Quick Test (Online)
-
-```bash
-helm install test-toolbox ./chart \
-  --set image.repository=ubuntu \
-  --set image.tag=24.04 \
-  -n default
-```
-
-### Scenario 2: Production Offline Deployment
-
-```bash
-helm install prod-toolbox ./chart \
-  -f examples/values-offline.yaml \
-  --set global.imageRegistry=harbor.prod.internal \
-  --set image.repository=platform/ultimate-k8s-toolbox \
-  --set image.tag=v1.0.0 \
-  -n toolbox --create-namespace
-```
-
-### Scenario 3: MongoDB Namespace with Existing SA
-
-```bash
-helm install mongo-toolbox ./chart \
-  -f examples/values-mongodb.yaml \
-  -n mongodb
-```
-
-### Scenario 4: Multiple Environments
-
-```bash
-# Development
-helm install dev-toolbox ./chart \
-  --set global.imageRegistry=registry.dev.local \
-  -n dev-tools --create-namespace
-
-# Production
-helm install prod-toolbox ./chart \
-  --set global.imageRegistry=registry.prod.local \
-  --set resources.limits.memory=8Gi \
-  -n prod-tools --create-namespace
-```
-
-## Accessing the Toolbox
-
-Once deployed, access your toolbox pod:
-
-```bash
-# List pods
-kubectl -n toolbox get pods
-
-# Execute into the pod
-kubectl -n toolbox exec -it deploy/my-toolbox-ultimate-k8s-toolbox -- bash
-
-# Or use the pod name directly
-POD_NAME=$(kubectl -n toolbox get pod -l app.kubernetes.io/name=ultimate-k8s-toolbox -o jsonpath='{.items[0].metadata.name}')
-kubectl -n toolbox exec -it $POD_NAME -- bash
-```
-
-## Offline Deployment Best Practices
-
-### 1. Image Management
-
-Create a script to sync images to your offline registry:
-
-```bash
-#!/bin/bash
-# sync-images.sh
-
-ONLINE_IMAGE="ultimate-k8s-toolbox:latest"
-OFFLINE_REGISTRY="myregistry.local:5000"
-OFFLINE_IMAGE="${OFFLINE_REGISTRY}/platform/ultimate-k8s-toolbox:latest"
-
-# Pull from internet
-docker pull $ONLINE_IMAGE
-
-# Tag for offline registry
-docker tag $ONLINE_IMAGE $OFFLINE_IMAGE
-
-# Push to offline registry
-docker push $OFFLINE_IMAGE
-
-echo "Image synced to offline registry: $OFFLINE_IMAGE"
-```
-
-### 2. Bundle Chart for Offline Transfer
-
-```bash
-# Package the chart
-helm package ./ultimate-k8s-toolbox
-
-# This creates: ultimate-k8s-toolbox-0.1.0.tgz
-# Transfer this file to your offline environment
-```
-
-### 3. Deploy from Package in Offline Environment
-
-```bash
-# Install from packaged chart
-helm install my-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
-  -f values-offline.yaml \
-  -n toolbox --create-namespace
-```
-
-## Upgrading
-
-```bash
-# Upgrade with new values
-helm upgrade my-toolbox ./ultimate-k8s-toolbox \
-  -f values-offline.yaml \
-  -n toolbox
-
-# Upgrade with new image tag
-helm upgrade my-toolbox ./ultimate-k8s-toolbox \
-  --reuse-values \
-  --set image.tag=v1.1.0 \
-  -n toolbox
-```
-
-## Uninstalling
-
-```bash
-helm uninstall my-toolbox -n toolbox
-```
-
-## Troubleshooting
-
-### Image Pull Errors in Offline Environment
-
-```bash
-# Check image pull secret
-kubectl get secret regcred -n toolbox -o yaml
-
-# Verify pod events
-kubectl describe pod -n toolbox -l app.kubernetes.io/name=ultimate-k8s-toolbox
-
-# Common issues:
-# 1. Wrong registry URL in global.imageRegistry
-# 2. Image not pushed to offline registry
-# 3. Missing or incorrect imagePullSecrets
-# 4. Registry authentication failure
-```
-
-### Pod Not Starting
-
-```bash
-# Check pod status
-kubectl get pods -n toolbox
-
-# View logs
-kubectl logs -n toolbox -l app.kubernetes.io/name=ultimate-k8s-toolbox
-
-# Check events
-kubectl get events -n toolbox --sort-by='.lastTimestamp'
-```
-
-### Testing Registry Connectivity
-
-```bash
-# From within the cluster, test registry access
-kubectl run test-registry --image=busybox --rm -it --restart=Never -- sh
-# Then inside the pod:
-wget -O- http://myregistry.local:5000/v2/_catalog
-```
-
-## Advanced Configuration
-
-### Custom Environment Variables
+### Example values.yaml
 
 ```yaml
-container:
-  env:
-    - name: MONGODB_URI
-      value: "mongodb://mongodb.mongodb.svc.cluster.local:27017"
-    - name: CUSTOM_VAR
-      valueFrom:
-        secretKeyRef:
-          name: my-secret
-          key: my-key
-```
+# Production offline deployment
+global:
+  imageRegistry: "harbor.internal.company.com"
 
-### Volume Mounts
+image:
+  repository: "platform/ultimate-k8s-toolbox"
+  tag: "1.0.0"
 
-```yaml
-volumes:
-  - name: config
-    configMap:
-      name: toolbox-config
-  - name: scripts
-    persistentVolumeClaim:
-      claimName: scripts-pvc
+imagePullSecrets:
+  - name: harbor-credentials
 
-container:
-  volumeMounts:
-    - name: config
-      mountPath: /config
-      readOnly: true
-    - name: scripts
-      mountPath: /scripts
-```
-
-### Health Probes
-
-```yaml
-livenessProbe:
+customCA:
   enabled: true
-  exec:
-    command:
-      - /bin/bash
-      - -c
-      - "ps aux | grep -v grep | grep 'tail -f /dev/null'"
-  initialDelaySeconds: 10
-  periodSeconds: 30
+  secretName: "company-ca-certs"
 
-readinessProbe:
-  enabled: true
-  exec:
-    command:
-      - /bin/bash
-      - -c
-      - "kubectl version --client"
-  initialDelaySeconds: 5
-  periodSeconds: 10
+resources:
+  requests:
+    cpu: "200m"
+    memory: "512Mi"
+  limits:
+    cpu: "4"
+    memory: "8Gi"
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
 ```
-
-## 📖 Documentation
-
-- **[NERDCTL-GUIDE.md](./NERDCTL-GUIDE.md)** - Complete guide to nerdctl + containerd setup and usage
-- **[TOOLS-REFERENCE.md](./TOOLS-REFERENCE.md)** - Comprehensive reference of all 50+ installed tools with examples
-- **[QUICKSTART.md](./QUICKSTART.md)** - Get started in 5 minutes
-- **[OFFLINE-DEPLOYMENT.md](./OFFLINE-DEPLOYMENT.md)** - Air-gapped deployment guide
-- **[MAKEFILE.md](./MAKEFILE.md)** - Makefile targets and automation
-- **[INDEX.md](./INDEX.md)** - Project structure and navigation
-- **[REORGANIZATION.md](./REORGANIZATION.md)** - Migration guide for new structure
-
-## 🔍 Tool Categories
-
-### MongoDB (Section 1)
-mongosh, mongodump, mongorestore, bsondump, mongostat, mongotop, mongofiles, mongoexport, mongoimport
-
-### TLS/X.509 (Section 2)  
-openssl, certtool (gnutls-bin), CA trust integration
-
-### Kubernetes (Section 3)
-kubectl, helm, jq, yq, envsubst
-
-### Networking (Section 4)
-dig, nslookup, ping, traceroute, netcat, tcpdump, nmap, curl, wget, telnet, iperf3
-
-### Storage (Section 5)
-tridentctl (NetApp Trident), nfs-common, rsync, git, zip/unzip, tar, gzip
-
-### Python (Section 6)
-Python 3.12 + pymongo, kubernetes, pyyaml, requests, jinja2, click
-
-### System Tools (Section 7)
-vim, nano, htop, less, psmisc, strace, procps, lsof, iotop, bash-completion
-
-### CA Integration (Section 8)
-Auto-trust custom CAs, system-wide certificate management
-
-## 🎯 Quick Tool Reference
-
-```bash
-# Inside the toolbox pod, view all tools:
-show-versions.sh
-
-# MongoDB with TLS
-mongosh "mongodb://host:27017" --tls --tlsCAFile /tls/ca.crt
-
-# Certificate debugging
-openssl s_client -connect host:27017 -tls1_2 -CAfile /tls/ca.crt
-
-# DNS troubleshooting
-dig +short service.namespace.svc.cluster.local
-
-# Network connectivity
-nc -zv service.namespace.svc.cluster.local 27017
-
-# Kubernetes inspection
-kubectl get pods -A
-helm list -A
-
-# Storage operations
-tridentctl get volume
-rsync -avz /source/ /dest/
-
-# Python scripting
-python3 -c "from pymongo import MongoClient; print('Ready')"
-```
-
-## 📋 Software Bill of Materials (SBOM)
-
-Every offline bundle includes comprehensive SBOM documentation:
-
-- **SBOM.txt** - Human-readable format with all components, versions, and licenses
-- **SBOM.json** - CycloneDX 1.4 format for automated processing
-- **MANIFEST.txt** - SHA256 checksums for verification
-
-The SBOM catalogs all 40 components including:
-- Container images and base OS
-- MongoDB tools (mongosh, database tools)
-- Kubernetes tools (kubectl, Helm, yq)
-- Networking utilities (13 tools)
-- Python packages (7 packages)
-- System tools (10 utilities)
-
-See [SBOM.md](./SBOM.md) for complete documentation.
-
-## License
-
-MIT
-
-## Contributing
-
-Contributions welcome! Please submit pull requests or issues.
 
 ---
 
-**Built with nerdctl + containerd for native Kubernetes integration** 🚀
+## 🔒 Security
+
+### Container Security
+
+- **Non-root by default**: Runs as UID 1000
+- **No privilege escalation**: Disabled by default
+- **Read-only root filesystem**: Supported (some tools require writeable dirs)
+- **RBAC**: Configurable cluster/namespace-scoped permissions
+
+### Reporting Vulnerabilities
+
+Please report security vulnerabilities via [GitHub Security Advisories](https://github.com/cantrellr/ultimate-k8s-toolbox/security/advisories/new). See [SECURITY.md](SECURITY.md) for details.
+
+---
+
+## 🛠️ Building
+
+### Prerequisites
+
+- Docker or nerdctl/containerd
+- Make
+- Helm 3.x
+
+### Build Commands
+
+```bash
+# Build image
+make build
+
+# Build multi-arch (amd64, arm64)
+make build-multi
+
+# Run tests
+make test
+
+# Create offline bundle
+make offline-bundle
+
+# Generate SBOM
+make sbom
+
+# See all targets
+make help
+```
+
+---
+
+## 📊 Project Structure
+
+```
+ultimate-k8s-toolbox/
+├── build/
+│   └── Dockerfile          # Container image definition
+├── chart/
+│   ├── Chart.yaml          # Helm chart metadata
+│   ├── values.yaml         # Default configuration
+│   └── templates/          # Kubernetes manifests
+├── configs/                # Example configurations
+├── examples/               # Deployment examples
+│   ├── values-online.yaml
+│   ├── values-offline.yaml
+│   └── ...
+├── scripts/
+│   ├── deploy-offline.sh.template
+│   ├── install-toolbox.sh
+│   └── toolbox             # Quick exec helper
+├── tests/                  # Test scripts
+├── CHANGELOG.md            # Release history
+├── CONTRIBUTING.md         # Contribution guide
+├── LICENSE                 # MIT License
+└── README.md               # This file
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) first.
+
+### Ways to Contribute
+
+- 🐛 Report bugs via [GitHub Issues](https://github.com/cantrellr/ultimate-k8s-toolbox/issues)
+- 💡 Suggest features via [GitHub Discussions](https://github.com/cantrellr/ultimate-k8s-toolbox/discussions)
+- 🔧 Submit pull requests
+- 📝 Improve documentation
+- 🛠️ Request new tools
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- The Kubernetes community
+- All the amazing open-source tool maintainers
+- Contributors and users of this project
+
+---
+
+<div align="center">
+
+**✈️ "First Flight" Release v1.0.0**
+
+*Per aspera ad astra* — Through hardships to the stars
+
+---
+
+Made with ❤️ for the Kubernetes community
+
+</div>
+]]>

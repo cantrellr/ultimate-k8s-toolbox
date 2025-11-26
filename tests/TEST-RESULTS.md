@@ -1,9 +1,9 @@
 # Deployment Test Results
 
 ## Test Environment
-- **Date:** November 24, 2025
-- **Kubernetes Cluster:** dc1preprod-ctrl01 (10.1.1.215:6443)
-- **Helm Version:** v3.19.2
+- **Date:** November 2025
+- **Kubernetes Cluster:** Test cluster
+- **Helm Version:** v3.19.x
 - **Test Namespace:** toolbox-test
 
 ## Chart Validation

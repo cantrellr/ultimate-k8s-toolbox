@@ -22,7 +22,7 @@
 
 global:
   # Set your internal/offline registry here
-  imageRegistry: "kuberegistry.k8.cantrellcloud.net:8443/library"
+  imageRegistry: "registry.example.com:5000"
   # Optional: Override namespace
   namespaceOverride: ""
 

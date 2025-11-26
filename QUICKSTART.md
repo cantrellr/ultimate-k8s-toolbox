@@ -115,7 +115,7 @@ helm lint ./chart
 | Scenario | global.imageRegistry | image.repository | Result |
 |----------|---------------------|------------------|--------|
 | Docker Hub | `""` | `ultimate-k8s-toolbox` | `ultimate-k8s-toolbox:tag` |
-| Simple Registry | `registry.local:5000` | `ultimate-k8s-toolbox` | `registry.local:500./chart:tag` |
+| Simple Registry | `registry.local:5000` | `ultimate-k8s-toolbox` | `registry.local:5000/ultimate-k8s-toolbox:tag` |
 | With Project | `harbor.com` | `platform/toolbox` | `harbor.com/platform/toolbox:tag` |
 | Full Path | `gcr.io/project` | `toolbox` | `gcr.io/project/toolbox:tag` |
 
