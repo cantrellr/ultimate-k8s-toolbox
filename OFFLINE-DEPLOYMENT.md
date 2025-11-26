@@ -428,6 +428,162 @@ helm get values my-toolbox -n toolbox -o yaml > current-values.yaml
 
 ---
 
+## Part 9: Custom CA Certificate Trust
+
+Enterprise environments often use internal PKI with custom Certificate Authorities. This section explains how to configure the toolbox to trust internal CA certificates.
+
+### Why CA Certificate Trust?
+
+- Internal registries with self-signed certificates
+- Corporate proxy servers with SSL inspection
+- Internal services using enterprise PKI
+- MongoDB clusters with TLS enabled using internal CAs
+
+### Quick Setup (Using Deploy Script)
+
+The `deploy-offline.sh` script supports CA certificate import:
+
+```bash
+# Interactive mode - script will prompt for certificates
+./deploy-offline.sh
+
+# Non-interactive with flags
+./deploy-offline.sh \
+  --root-ca /path/to/root-ca.crt \
+  --subordinate-ca /path/to/subordinate-ca.crt \
+  --ca-secret-name my-custom-ca-certs
+```
+
+### Manual CA Certificate Configuration
+
+#### Step 1: Create CA Certificate Secret
+
+```bash
+# Create namespace
+kubectl create namespace toolbox
+
+# Create secret from certificate files
+kubectl create secret generic toolbox-ca-certs \
+  --from-file=root-ca.crt=/path/to/root-ca.crt \
+  --from-file=subordinate-ca.crt=/path/to/sub-ca.crt \
+  -n toolbox
+```
+
+#### Step 2: Configure Helm Values
+
+Add to your `values-offline.yaml`:
+
+```yaml
+customCA:
+  enabled: true
+  secretName: "toolbox-ca-certs"
+  mountPath: /etc/ssl/custom-ca
+```
+
+#### Step 3: Deploy with CA Trust
+
+```bash
+helm install my-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
+  -f values-offline.yaml \
+  -n toolbox
+```
+
+### Helm-Managed CA Certificates (Alternative)
+
+You can also embed certificates directly in Helm values:
+
+```yaml
+customCA:
+  enabled: true
+  createSecret: true
+  secretName: "toolbox-ca-certs"
+  mountPath: /etc/ssl/custom-ca
+  certificates:
+    - name: root-ca.crt
+      content: |
+        -----BEGIN CERTIFICATE-----
+        MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs
+        ... (your root CA certificate)
+        -----END CERTIFICATE-----
+    - name: subordinate-ca.crt
+      content: |
+        -----BEGIN CERTIFICATE-----
+        ... (your subordinate CA certificate)
+        -----END CERTIFICATE-----
+```
+
+> **Security Note**: For production, it's recommended to create secrets outside of Helm to avoid storing certificate content in version control.
+
+### How CA Trust Works in the Pod
+
+1. **Mount**: CA certificates are mounted from the Kubernetes secret
+2. **Copy**: The `update-ca-trust.sh` script copies certs to `/usr/local/share/ca-certificates/`
+3. **Update**: `update-ca-certificates` regenerates the system trust store
+4. **Trust**: All tools (curl, openssl, mongosh, Python) automatically trust the CAs
+
+### Verify CA Trust in Pod
+
+```bash
+# Exec into the pod
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- bash
+
+# List mounted certificates
+ls -la /etc/ssl/custom-ca/
+
+# Run CA trust update (if not already done)
+/usr/local/bin/update-ca-trust.sh
+
+# Verify trust store
+ls /usr/local/share/ca-certificates/
+
+# Test connection to internal service
+curl https://internal-service.company.com
+openssl s_client -connect internal-service.company.com:443
+
+# Verify MongoDB connection with TLS
+mongosh "mongodb://mongo.internal.company.com:27017/?tls=true"
+```
+
+### Standalone CA Import Script
+
+Use the `import-ca-certs.sh` script for certificate validation and secret creation:
+
+```bash
+# Validate certificates and create secret
+./scripts/import-ca-certs.sh \
+  --root-ca /path/to/root-ca.crt \
+  --subordinate-ca /path/to/sub-ca.crt \
+  --secret-name toolbox-ca-certs \
+  --namespace toolbox
+```
+
+The script:
+- Validates certificate format using OpenSSL
+- Checks expiration dates and warns about expiring certs
+- Creates a combined `ca-bundle.crt` in the secret
+- Provides detailed output about certificate subjects
+
+### Troubleshooting CA Trust
+
+```bash
+# Check if certificates are mounted
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- ls -la /etc/ssl/custom-ca/
+
+# Verify certificate content
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
+  openssl x509 -in /etc/ssl/custom-ca/root-ca.crt -text -noout
+
+# Check system trust store
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
+  ls /etc/ssl/certs/ | grep -i custom
+
+# Test with verbose output
+kubectl exec -it deploy/my-toolbox-ultimate-k8s-toolbox -n toolbox -- \
+  curl -v https://internal-service.company.com
+```
+
+---
+
 ## Registry-Specific Guides
 
 ### Harbor Registry

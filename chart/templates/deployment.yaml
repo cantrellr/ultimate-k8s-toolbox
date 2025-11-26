@@ -75,12 +75,23 @@ spec:
         readinessProbe:
           {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 10 }}
         {{- end }}
-        {{- with .Values.container.volumeMounts }}
         volumeMounts:
+        {{- if .Values.customCA.enabled }}
+        - name: custom-ca-certs
+          mountPath: {{ .Values.customCA.mountPath | default "/etc/ssl/custom-ca" }}
+          readOnly: true
+        {{- end }}
+        {{- with .Values.container.volumeMounts }}
           {{- toYaml . | nindent 10 }}
         {{- end }}
-      {{- with .Values.volumes }}
       volumes:
+      {{- if .Values.customCA.enabled }}
+      - name: custom-ca-certs
+        secret:
+          secretName: {{ .Values.customCA.secretName | default "toolbox-ca-certs" }}
+          optional: true
+      {{- end }}
+      {{- with .Values.volumes }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}

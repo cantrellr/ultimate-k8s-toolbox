@@ -22,7 +22,7 @@
 
 global:
   # Set your internal/offline registry here
-  imageRegistry: "myregistry.local:5000"
+  imageRegistry: "kuberegistry.k8.cantrellcloud.net:8443/library"
   # Optional: Override namespace
   namespaceOverride: ""
 
@@ -35,8 +35,8 @@ image:
   pullPolicy: IfNotPresent
 
 # Reference the image pull secret created above
-imagePullSecrets:
-  - name: regcred
+#imagePullSecrets:
+#  - name: regcred
 
 serviceAccount:
   create: true
@@ -73,7 +73,7 @@ resources:
 # =============================================================================
 customCA:
   # Set to true to enable custom CA certificate trust
-  enabled: false
+  enabled: true
   # Name of the secret containing CA certificates
   secretName: "toolbox-ca-certs"
   # Mount path inside the container

@@ -162,22 +162,209 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 RUN python3 --version && pip3 --version
 
 # ============================================================================
-# SECTION 9: CA Trust Integration (Optional)
+# SECTION 9: CA Trust Integration (Enterprise Best Practice)
 # ============================================================================
+# Industry best practice for CA trust integration:
+# 1. Mount certificates as Kubernetes Secret/ConfigMap volume
+# 2. Copy to /usr/local/share/ca-certificates/ on container startup
+# 3. Run update-ca-certificates to update system trust store
+# 4. All tools (curl, wget, openssl, Python, mongosh) will trust custom CAs
 
 # Create directory for custom CA certificates
 RUN mkdir -p /usr/local/share/ca-certificates/custom
 
-# Add CA trust update script for runtime mounting
-RUN echo '#!/bin/bash' > /usr/local/bin/update-ca-trust.sh && \
-    echo '# Update CA trust when custom certificates are mounted' >> /usr/local/bin/update-ca-trust.sh && \
-    echo 'if [ -f /tls/ca.crt ]; then' >> /usr/local/bin/update-ca-trust.sh && \
-    echo '    echo "Installing custom CA certificate..."' >> /usr/local/bin/update-ca-trust.sh && \
-    echo '    cp /tls/ca.crt /usr/local/share/ca-certificates/custom/cluster-ca.crt' >> /usr/local/bin/update-ca-trust.sh && \
-    echo '    update-ca-certificates' >> /usr/local/bin/update-ca-trust.sh && \
-    echo '    echo "CA trust updated successfully"' >> /usr/local/bin/update-ca-trust.sh && \
-    echo 'fi' >> /usr/local/bin/update-ca-trust.sh && \
-    chmod +x /usr/local/bin/update-ca-trust.sh
+# Add comprehensive CA trust update script
+# This script handles multiple certificate sources and formats
+RUN cat > /usr/local/bin/update-ca-trust.sh << 'CATRUSTSCRIPT'
+#!/bin/bash
+# =============================================================================
+# CA Trust Update Script for Ultimate K8s Toolbox
+# =============================================================================
+# This script updates the system CA trust store with custom certificates.
+# It supports multiple certificate sources and is designed to be idempotent.
+#
+# Sources checked (in order):
+#   1. /etc/ssl/custom-ca/ - Primary mount point for Kubernetes secrets
+#   2. /tls/ca.crt - Legacy single certificate mount
+#   3. CA_CERT_DIR environment variable - Custom directory
+#
+# Usage:
+#   update-ca-trust.sh              # Auto-detect and install CAs
+#   update-ca-trust.sh --verify     # Verify CA installation
+#   update-ca-trust.sh --list       # List installed custom CAs
+# =============================================================================
+
+set -e
+
+# Configuration
+CA_TARGET_DIR="/usr/local/share/ca-certificates/custom"
+PRIMARY_CA_SOURCE="${CA_CERT_DIR:-/etc/ssl/custom-ca}"
+LEGACY_CA_PATH="/tls/ca.crt"
+VERBOSE=${VERBOSE:-false}
+
+log_info() {
+    echo "[CA-TRUST] $1"
+}
+
+log_debug() {
+    if [ "$VERBOSE" = true ]; then
+        echo "[CA-TRUST] DEBUG: $1"
+    fi
+}
+
+# Install certificates from a directory
+install_certs_from_dir() {
+    local source_dir="$1"
+    local installed=0
+    
+    if [ ! -d "$source_dir" ]; then
+        log_debug "Directory not found: $source_dir"
+        return 0
+    fi
+    
+    # Process all .crt and .pem files
+    for cert in "$source_dir"/*.crt "$source_dir"/*.pem; do
+        if [ -f "$cert" ]; then
+            local cert_name
+            cert_name=$(basename "$cert")
+            
+            # Validate it's a valid certificate
+            if openssl x509 -in "$cert" -noout 2>/dev/null; then
+                # Copy with .crt extension (required by update-ca-certificates)
+                local target_name="${cert_name%.*}.crt"
+                cp "$cert" "$CA_TARGET_DIR/$target_name"
+                log_info "Installed: $cert_name"
+                ((installed++))
+            else
+                log_debug "Skipping invalid certificate: $cert_name"
+            fi
+        fi
+    done
+    
+    return $installed
+}
+
+# Install single certificate file
+install_single_cert() {
+    local cert_path="$1"
+    local cert_name="$2"
+    
+    if [ ! -f "$cert_path" ]; then
+        log_debug "Certificate not found: $cert_path"
+        return 1
+    fi
+    
+    if openssl x509 -in "$cert_path" -noout 2>/dev/null; then
+        cp "$cert_path" "$CA_TARGET_DIR/${cert_name}.crt"
+        log_info "Installed: $cert_name from $cert_path"
+        return 0
+    else
+        log_debug "Invalid certificate: $cert_path"
+        return 1
+    fi
+}
+
+# Verify CA installation
+verify_installation() {
+    echo "Custom CA Certificates:"
+    echo "========================"
+    
+    local count=0
+    for cert in "$CA_TARGET_DIR"/*.crt; do
+        if [ -f "$cert" ]; then
+            local subject
+            subject=$(openssl x509 -in "$cert" -noout -subject 2>/dev/null | sed 's/subject=//')
+            echo "  $(basename "$cert"): $subject"
+            ((count++))
+        fi
+    done
+    
+    if [ $count -eq 0 ]; then
+        echo "  (none installed)"
+    fi
+    
+    echo ""
+    echo "System trust store: /etc/ssl/certs/ca-certificates.crt"
+    echo "Custom CAs trusted: $count"
+}
+
+# List installed certificates
+list_certificates() {
+    echo "Installed Custom CA Certificates:"
+    echo "=================================="
+    
+    for cert in "$CA_TARGET_DIR"/*.crt; do
+        if [ -f "$cert" ]; then
+            echo ""
+            echo "File: $(basename "$cert")"
+            openssl x509 -in "$cert" -noout -subject -issuer -dates 2>/dev/null | sed 's/^/  /'
+        fi
+    done
+}
+
+# Main function
+main() {
+    case "${1:-}" in
+        --verify)
+            verify_installation
+            exit 0
+            ;;
+        --list)
+            list_certificates
+            exit 0
+            ;;
+        --help)
+            head -20 "$0" | tail -15 | sed 's/^# //'
+            exit 0
+            ;;
+    esac
+    
+    log_info "Updating CA trust store..."
+    
+    # Ensure target directory exists
+    mkdir -p "$CA_TARGET_DIR"
+    
+    local certs_installed=0
+    
+    # Source 1: Primary mount directory (Kubernetes secret/configmap)
+    if [ -d "$PRIMARY_CA_SOURCE" ]; then
+        log_debug "Checking primary source: $PRIMARY_CA_SOURCE"
+        install_certs_from_dir "$PRIMARY_CA_SOURCE" || true
+        certs_installed=$((certs_installed + $?))
+    fi
+    
+    # Source 2: Legacy single certificate path
+    if [ -f "$LEGACY_CA_PATH" ]; then
+        log_debug "Checking legacy path: $LEGACY_CA_PATH"
+        if install_single_cert "$LEGACY_CA_PATH" "legacy-ca"; then
+            ((certs_installed++))
+        fi
+    fi
+    
+    # Source 3: Environment variable custom directory
+    if [ -n "${CA_CERT_DIR:-}" ] && [ "$CA_CERT_DIR" != "$PRIMARY_CA_SOURCE" ]; then
+        log_debug "Checking custom directory: $CA_CERT_DIR"
+        install_certs_from_dir "$CA_CERT_DIR" || true
+    fi
+    
+    # Update system trust store if any certificates were installed
+    if [ "$(ls -A "$CA_TARGET_DIR" 2>/dev/null)" ]; then
+        log_info "Running update-ca-certificates..."
+        update-ca-certificates --fresh > /dev/null 2>&1 || update-ca-certificates > /dev/null 2>&1
+        log_info "CA trust store updated successfully"
+        
+        # Show summary
+        local count
+        count=$(find "$CA_TARGET_DIR" -name "*.crt" -type f 2>/dev/null | wc -l)
+        log_info "Total custom CAs installed: $count"
+    else
+        log_info "No custom CA certificates found"
+    fi
+}
+
+main "$@"
+CATRUSTSCRIPT
+RUN chmod +x /usr/local/bin/update-ca-trust.sh
 
 # ============================================================================
 # SECTION 10: User Setup + Workspace Configuration

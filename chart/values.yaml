@@ -118,6 +118,9 @@ container:
   command: ["/bin/bash", "-c"]
   args:
     - |
+      # Update CA trust if custom certificates are mounted
+      /usr/local/bin/update-ca-trust.sh 2>/dev/null || true
+      
       echo "==========================================";
       echo "Ultimate Kubernetes Toolbox Pod Ready";
       echo "==========================================";
@@ -132,6 +135,11 @@ container:
       echo "  - Network tools (ping, curl, wget, netcat, nslookup, dig, traceroute)";
       echo "  - And more...";
       echo "";
+      if [ -d /etc/ssl/custom-ca ] && [ "$(ls -A /etc/ssl/custom-ca 2>/dev/null)" ]; then
+        echo "Custom CA certificates: LOADED";
+        ls /etc/ssl/custom-ca/*.crt 2>/dev/null | xargs -I {} basename {} | sed 's/^/  - /';
+        echo "";
+      fi
       echo "To access this pod:";
       echo "  kubectl -n ${POD_NAMESPACE:-default} exec -it $HOSTNAME -- bash";
       echo "";
@@ -190,3 +198,61 @@ readinessProbe:
   timeoutSeconds: 5
   successThreshold: 1
   failureThreshold: 3
+
+# =============================================================================
+# Custom CA Certificate Configuration
+# =============================================================================
+# Industry best practice for CA trust integration in Kubernetes:
+# 1. Store CA certificates in a Kubernetes Secret
+# 2. Mount the secret as a volume in the pod
+# 3. Run update-ca-certificates on startup to trust custom CAs
+#
+# This enables tools like curl, wget, openssl, Python requests, and mongosh
+# to trust your internal/enterprise CA certificates.
+#
+# Usage:
+#   1. Create a secret with your CA certificates:
+#      kubectl create secret generic toolbox-ca-certs \
+#        --from-file=root-ca.crt=/path/to/root-ca.crt \
+#        --from-file=subordinate-ca.crt=/path/to/sub-ca.crt \
+#        -n toolbox
+#
+#   2. Enable customCA in values:
+#      customCA:
+#        enabled: true
+#        secretName: toolbox-ca-certs
+#
+#   3. The toolbox pod will automatically trust these CAs on startup
+# =============================================================================
+customCA:
+  # Enable custom CA certificate mounting and trust
+  enabled: false
+  
+  # Name of the Kubernetes Secret containing CA certificates
+  # The secret should contain .crt or .pem files
+  secretName: "toolbox-ca-certs"
+  
+  # Mount path for CA certificates inside the container
+  # Certificates are mounted here, then copied to system trust store on startup
+  mountPath: /etc/ssl/custom-ca
+  
+  # Optional: Create the secret from inline certificate data
+  # If false, you must create the secret manually before deployment
+  # If true, provide certificate content in 'certificates' below
+  createSecret: false
+  
+  # Certificate data (only used if createSecret: true)
+  # Each entry creates a file in the secret
+  # certificates:
+  #   - name: root-ca.crt
+  #     content: |
+  #       -----BEGIN CERTIFICATE-----
+  #       MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs
+  #       ... (certificate content)
+  #       -----END CERTIFICATE-----
+  #   - name: subordinate-ca.crt
+  #     content: |
+  #       -----BEGIN CERTIFICATE-----
+  #       ... (certificate content)
+  #       -----END CERTIFICATE-----
+  certificates: []

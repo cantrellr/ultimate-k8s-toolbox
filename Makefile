@@ -286,6 +286,23 @@ create-sbom:
 	@echo "=========================================="
 	@echo "Generating SBOM for offline bundle..."
 	@echo ""
+	@# Capture image digest/hash
+	@echo "Capturing image hashes..."
+	@IMAGE_ID=""; \
+	if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then \
+		IMAGE_ID=$$(docker inspect --format='{{.Id}}' $(TOOLBOX_IMAGE) 2>/dev/null | sed 's/sha256://'); \
+	else \
+		IMAGE_ID=$$($(NERDCTL) --namespace $(NERDCTL_NAMESPACE) inspect --format='{{.Id}}' $(TOOLBOX_IMAGE) 2>/dev/null | sed 's/sha256://'); \
+	fi; \
+	echo "$$IMAGE_ID" > $(BUNDLE_DIR)/.image-digest
+	@# Capture tarball hash
+	@IMAGE_TAR_HASH=$$(sha256sum $(IMAGES_DIR)/$(CHART_NAME)-$(BUNDLE_VERSION).tar | cut -d' ' -f1); \
+	echo "$$IMAGE_TAR_HASH" > $(BUNDLE_DIR)/.image-tar-hash
+	@# Capture chart hash
+	@CHART_HASH=$$(sha256sum $(CHARTS_DIR)/$(CHART_NAME)-$(CHART_VERSION).tgz | cut -d' ' -f1); \
+	echo "$$CHART_HASH" > $(BUNDLE_DIR)/.chart-hash
+	@echo "✓ Hashes captured"
+	@echo ""
 	@# Create SBOM header
 	@echo "Software Bill of Materials (SBOM)" > $(BUNDLE_DIR)/SBOM.txt
 	@echo "=================================" >> $(BUNDLE_DIR)/SBOM.txt
@@ -293,6 +310,19 @@ create-sbom:
 	@echo "Bundle: $(CHART_NAME) $(BUNDLE_VERSION)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "Created: $$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "Format: SPDX-like" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "=================================" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "ARTIFACT CHECKSUMS (SHA256)" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "=================================" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "Toolbox Image Digest:" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "  sha256:$$(cat $(BUNDLE_DIR)/.image-digest)" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "Image Tarball ($(CHART_NAME)-$(BUNDLE_VERSION).tar):" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "  sha256:$$(cat $(BUNDLE_DIR)/.image-tar-hash)" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "Helm Chart ($(CHART_NAME)-$(CHART_VERSION).tgz):" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "  sha256:$$(cat $(BUNDLE_DIR)/.chart-hash)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "=================================" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "CONTAINER IMAGES" >> $(BUNDLE_DIR)/SBOM.txt
@@ -307,6 +337,7 @@ create-sbom:
 	@echo "  Name: $(TOOLBOX_IMAGE_REPO)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "  Version: $(TOOLBOX_IMAGE_TAG)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "  Size: $$(du -h $(IMAGES_DIR)/*.tar | cut -f1)" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "  SHA256: $$(cat $(BUNDLE_DIR)/.image-digest)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "=================================" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "MONGODB TOOLS" >> $(BUNDLE_DIR)/SBOM.txt
@@ -569,58 +600,96 @@ create-sbom:
 	@echo "✓ Created SBOM.txt"
 	@echo ""
 	@echo "Creating JSON SBOM..."
-	@# Create JSON SBOM
-	@echo '{' > $(BUNDLE_DIR)/SBOM.json
-	@echo '  "bomFormat": "CycloneDX",' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '  "specVersion": "1.4",' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '  "version": 1,' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '  "metadata": {' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    "timestamp": "'$$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    "component": {' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '      "type": "container",' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '      "name": "$(CHART_NAME)",' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '      "version": "$(BUNDLE_VERSION)",' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '      "description": "Ultimate Kubernetes Toolbox - Swiss Army Knife for K8s, MongoDB, and Infrastructure Operations"' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    }' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '  },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '  "components": [' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "operating-system", "name": "ubuntu", "version": "24.04", "licenses": [{"license": {"id": "Proprietary"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "mongosh", "version": "2.3.7", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb-js/mongosh@2.3.7" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "mongodb-database-tools", "version": "100.10.0", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb/mongo-tools@100.10.0" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "kubectl", "version": "1.31.4", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/kubernetes/kubernetes@v1.31.4" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "helm", "version": "3.x", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/helm/helm@3.x" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "yq", "version": "4.45.1", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:github/mikefarah/yq@v4.45.1" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "tridentctl", "version": "24.10.0", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/NetApp/trident@24.10.0" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "curl", "version": "latest", "licenses": [{"license": {"id": "MIT"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "wget", "version": "latest", "licenses": [{"license": {"id": "GPL-3.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "netcat", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "nmap", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "dnsutils", "version": "latest", "licenses": [{"license": {"id": "MPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "iproute2", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "net-tools", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "iputils-ping", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "traceroute", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "tcpdump", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "socat", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "openssh-client", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "application", "name": "python", "version": "3.12", "licenses": [{"license": {"id": "Python-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "pymongo", "version": "latest", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/pymongo" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "kubernetes", "version": "latest", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/kubernetes" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "PyYAML", "version": "latest", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:pypi/PyYAML" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "requests", "version": "latest", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/requests" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "jinja2", "version": "latest", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/jinja2" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "click", "version": "latest", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/click" },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "vim", "version": "latest", "licenses": [{"license": {"name": "Vim"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "htop", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "jq", "version": "latest", "licenses": [{"license": {"id": "MIT"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "tmux", "version": "latest", "licenses": [{"license": {"id": "ISC"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "strace", "version": "latest", "licenses": [{"license": {"id": "LGPL-2.1"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "lsof", "version": "latest", "licenses": [{"license": {"name": "Custom"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "nfs-common", "version": "latest", "licenses": [{"license": {"id": "GPL"}}] },' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '    { "type": "library", "name": "ca-certificates", "version": "latest", "licenses": [{"license": {"id": "MPL-2.0"}}] }' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '  ]' >> $(BUNDLE_DIR)/SBOM.json
-	@echo '}' >> $(BUNDLE_DIR)/SBOM.json
-	@echo "✓ Created SBOM.json (CycloneDX format)"
+	@# Create JSON SBOM with hashes
+	@IMAGE_DIGEST=$$(cat $(BUNDLE_DIR)/.image-digest); \
+	IMAGE_TAR_HASH=$$(cat $(BUNDLE_DIR)/.image-tar-hash); \
+	CHART_HASH=$$(cat $(BUNDLE_DIR)/.chart-hash); \
+	echo '{' > $(BUNDLE_DIR)/SBOM.json; \
+	echo '  "bomFormat": "CycloneDX",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '  "specVersion": "1.4",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '  "version": 1,' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '  "metadata": {' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    "timestamp": "'$$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    "component": {' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "type": "container",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "name": "$(CHART_NAME)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "version": "$(BUNDLE_VERSION)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "description": "Ultimate Kubernetes Toolbox - Swiss Army Knife for K8s, MongoDB, and Infrastructure Operations",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "hashes": [' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '        { "alg": "SHA-256", "content": "'$$IMAGE_DIGEST'" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      ]' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    "tools": [' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      { "vendor": "CycloneDX", "name": "ultimate-k8s-toolbox-makefile", "version": "1.0.0" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    ]' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '  },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '  "components": [' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    {' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "type": "container",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "name": "$(TOOLBOX_IMAGE_REPO)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "version": "$(TOOLBOX_IMAGE_TAG)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "hashes": [' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '        { "alg": "SHA-256", "content": "'$$IMAGE_DIGEST'" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      ],' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "purl": "pkg:docker/$(TOOLBOX_IMAGE_REPO)@$(TOOLBOX_IMAGE_TAG)"' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    {' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "type": "file",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "name": "$(CHART_NAME)-$(BUNDLE_VERSION).tar",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "version": "$(BUNDLE_VERSION)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "description": "Container image tarball",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "hashes": [' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '        { "alg": "SHA-256", "content": "'$$IMAGE_TAR_HASH'" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      ]' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    {' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "type": "file",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "name": "$(CHART_NAME)-$(CHART_VERSION).tgz",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "version": "$(CHART_VERSION)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "description": "Helm chart package",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "hashes": [' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '        { "alg": "SHA-256", "content": "'$$CHART_HASH'" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      ]' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "operating-system", "name": "ubuntu", "version": "24.04", "licenses": [{"license": {"id": "Proprietary"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "mongosh", "version": "2.3.7", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb-js/mongosh@2.3.7" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "mongodb-database-tools", "version": "100.10.0", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb/mongo-tools@100.10.0" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "kubectl", "version": "1.31.4", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/kubernetes/kubernetes@v1.31.4" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "helm", "version": "3.x", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/helm/helm@3.x" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "yq", "version": "4.45.1", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:github/mikefarah/yq@v4.45.1" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "tridentctl", "version": "24.10.0", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/NetApp/trident@24.10.0" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "curl", "version": "latest", "licenses": [{"license": {"id": "MIT"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "wget", "version": "latest", "licenses": [{"license": {"id": "GPL-3.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "netcat", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "nmap", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "dnsutils", "version": "latest", "licenses": [{"license": {"id": "MPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "iproute2", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "net-tools", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "iputils-ping", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "traceroute", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "tcpdump", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "socat", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "openssh-client", "version": "latest", "licenses": [{"license": {"id": "BSD"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "python", "version": "3.12", "licenses": [{"license": {"id": "Python-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "pymongo", "version": "latest", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/pymongo" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "kubernetes", "version": "latest", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/kubernetes" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "PyYAML", "version": "latest", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:pypi/PyYAML" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "requests", "version": "latest", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:pypi/requests" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "jinja2", "version": "latest", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/jinja2" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "click", "version": "latest", "licenses": [{"license": {"id": "BSD-3-Clause"}}], "purl": "pkg:pypi/click" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "vim", "version": "latest", "licenses": [{"license": {"name": "Vim"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "htop", "version": "latest", "licenses": [{"license": {"id": "GPL-2.0"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "jq", "version": "latest", "licenses": [{"license": {"id": "MIT"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "tmux", "version": "latest", "licenses": [{"license": {"id": "ISC"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "strace", "version": "latest", "licenses": [{"license": {"id": "LGPL-2.1"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "lsof", "version": "latest", "licenses": [{"license": {"name": "Custom"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "nfs-common", "version": "latest", "licenses": [{"license": {"id": "GPL"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "library", "name": "ca-certificates", "version": "latest", "licenses": [{"license": {"id": "MPL-2.0"}}] }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '  ]' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '}' >> $(BUNDLE_DIR)/SBOM.json
+	@# Clean up temp files
+	@rm -f $(BUNDLE_DIR)/.image-digest $(BUNDLE_DIR)/.image-tar-hash $(BUNDLE_DIR)/.chart-hash
+	@echo "✓ Created SBOM.json (CycloneDX format with SHA256 hashes)"
 	@echo ""
 	@echo "SBOM Summary:"
 	@echo "  Format: SPDX-like (text) + CycloneDX (JSON)"

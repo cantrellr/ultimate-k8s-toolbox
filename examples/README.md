@@ -26,6 +26,20 @@ Example showing how to deploy the toolbox in a specific namespace (mongodb) usin
 helm install my-toolbox ../chart -f values-mongodb.yaml -n mongodb
 ```
 
+### values-with-ca.yaml
+Example demonstrating custom CA certificate trust configuration for enterprise environments with internal PKI.
+
+```bash
+# First, create the CA secret
+kubectl create secret generic toolbox-ca-certs \
+  --from-file=root-ca.crt=/path/to/root-ca.crt \
+  --from-file=subordinate-ca.crt=/path/to/sub-ca.crt \
+  -n toolbox --create-namespace
+
+# Deploy with CA configuration
+helm install my-toolbox ../chart -f values-with-ca.yaml -n toolbox
+```
+
 ### DEPLOYMENT-EXAMPLES.sh
 Executable script containing 10 different deployment scenarios with step-by-step examples.
 

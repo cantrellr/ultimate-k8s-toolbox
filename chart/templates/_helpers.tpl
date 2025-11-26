@@ -106,3 +106,15 @@ Examples:
 {{- printf "%s:%s" $repository $tag }}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate combined CA bundle from all certificates.
+Used when customCA.createSecret is true to create a single bundle file.
+*/}}
+{{- define "ultimate-k8s-toolbox.caBundle" -}}
+{{- $bundle := "" }}
+{{- range .Values.customCA.certificates }}
+{{- $bundle = printf "%s%s\n" $bundle .content }}
+{{- end }}
+{{- $bundle }}
+{{- end }}

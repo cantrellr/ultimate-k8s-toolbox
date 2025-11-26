@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Ultimate K8s Toolbox automatically generates a comprehensive Software Bill of Materials (SBOM) for every offline bundle. The SBOM provides complete transparency into all software components, their versions, and licenses.
+The Ultimate K8s Toolbox automatically generates a comprehensive Software Bill of Materials (SBOM) for every offline bundle. The SBOM provides complete transparency into all software components, their versions, licenses, and cryptographic hashes for verification.
 
 ## SBOM Formats
 
@@ -11,14 +11,53 @@ The offline bundle includes two SBOM formats:
 ### 1. SBOM.txt (Human-Readable)
 - **Format**: SPDX-like text format
 - **Purpose**: Easy to read and audit
-- **Contents**: Detailed component listing with versions and licenses
+- **Contents**: Detailed component listing with versions, licenses, and SHA256 hashes
 - **Use Case**: Manual review, compliance documentation
 
 ### 2. SBOM.json (Machine-Readable)
 - **Format**: CycloneDX 1.4
 - **Purpose**: Automated processing and integration
-- **Contents**: Structured JSON with component metadata
+- **Contents**: Structured JSON with component metadata and cryptographic hashes
 - **Use Case**: CI/CD pipelines, security scanning tools, compliance automation
+
+## SHA256 Hash Verification
+
+The SBOM includes SHA256 hashes for critical artifacts to ensure supply chain integrity:
+
+### Artifact Hashes
+| Artifact | Hash Location | Purpose |
+|----------|---------------|---------|
+| Container Image | `image_digest` field | Verify image integrity |
+| Image Tarball | `tarball_hash` field | Verify exported image file |
+| Helm Chart | `chart_hash` field | Verify chart package |
+
+### Example Hash Entries (SBOM.txt)
+```
+=== ARTIFACT HASHES ===
+Image Digest: sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4
+Image Tarball SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+Helm Chart SHA256: f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4
+
+=== VERIFICATION COMMANDS ===
+# Verify image tarball
+sha256sum -c <<< "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  images/ultimate-k8s-toolbox-v1.0.0.tar"
+
+# Verify Helm chart
+sha256sum -c <<< "f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4  charts/ultimate-k8s-toolbox-0.1.0.tgz"
+```
+
+### CycloneDX JSON Hash Format
+```json
+{
+  "metadata": {
+    "properties": [
+      { "name": "image_digest", "value": "sha256:..." },
+      { "name": "tarball_hash", "value": "sha256:..." },
+      { "name": "chart_hash", "value": "sha256:..." }
+    ]
+  }
+}
+```
 
 ## What's Included
 
@@ -192,19 +231,40 @@ The SBOM is automatically generated during bundle creation. To update:
 The SBOM can be verified against the actual bundle:
 
 ```bash
-# Check image size matches
-du -h dist/offline-bundle/images/*.tar
+# Verify image tarball hash (from SBOM.txt)
+grep "Image Tarball SHA256" dist/offline-bundle/SBOM.txt
+sha256sum dist/offline-bundle/images/*.tar
+
+# Verify Helm chart hash
+grep "Helm Chart SHA256" dist/offline-bundle/SBOM.txt
+sha256sum dist/offline-bundle/charts/*.tgz
+
+# Cross-reference with MANIFEST.txt checksums
+sha256sum -c dist/offline-bundle/MANIFEST.txt
+
+# Check image digest after loading
+docker load -i dist/offline-bundle/images/*.tar
+docker inspect ultimate-k8s-toolbox:v1.0.0 --format='{{.Id}}'
 
 # Verify component presence in image
-docker load -i dist/offline-bundle/images/*.tar
 docker run --rm ultimate-k8s-toolbox:v1.0.0 bash -c "
   mongosh --version
   kubectl version --client
   python3 --version
 "
+```
 
-# Cross-reference with MANIFEST.txt checksums
-sha256sum -c dist/offline-bundle/MANIFEST.txt
+### Programmatic Hash Verification
+```bash
+# Extract and verify hashes from CycloneDX JSON
+IMAGE_HASH=$(jq -r '.metadata.properties[] | select(.name=="tarball_hash") | .value' offline-bundle/SBOM.json)
+CHART_HASH=$(jq -r '.metadata.properties[] | select(.name=="chart_hash") | .value' offline-bundle/SBOM.json)
+
+# Verify image tarball
+echo "${IMAGE_HASH}  images/ultimate-k8s-toolbox-v1.0.0.tar" | sha256sum -c -
+
+# Verify chart
+echo "${CHART_HASH}  charts/ultimate-k8s-toolbox-0.1.0.tgz" | sha256sum -c -
 ```
 
 ## Best Practices
