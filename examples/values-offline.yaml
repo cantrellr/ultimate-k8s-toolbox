@@ -1,0 +1,59 @@
+# Offline/Air-gapped deployment - uses internal registry
+# Use this configuration for deploying in restricted environments without internet access
+# 
+# Prerequisites:
+# 1. Push the toolbox image to your internal registry:
+#    docker tag ultimate-k8s-toolbox:latest myregistry.local:5000/platform/ultimate-k8s-toolbox:latest
+#    docker push myregistry.local:5000/platform/ultimate-k8s-toolbox:latest
+#
+# 2. Create image pull secret (if registry requires authentication):
+#    kubectl create secret docker-registry regcred \
+#      --docker-server=myregistry.local:5000 \
+#      --docker-username=myuser \
+#      --docker-password=mypass \
+#      --docker-email=myemail@example.com \
+#      -n toolbox
+
+global:
+  # Set your internal/offline registry here
+  imageRegistry: "myregistry.local:5000"
+  # Optional: Override namespace
+  namespaceOverride: ""
+
+image:
+  # Repository path within the registry (without the registry prefix)
+  # The full image will be: {global.imageRegistry}/{repository}:{tag}
+  # Example result: myregistry.local:5000/platform/ultimate-k8s-toolbox:v1.0.0
+  repository: "platform/ultimate-k8s-toolbox"
+  tag: "v1.0.0"
+  pullPolicy: IfNotPresent
+
+# Reference the image pull secret created above
+imagePullSecrets:
+  - name: regcred
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+
+# Add node selector if deploying to specific nodes
+nodeSelector: {}
+  # Example: Only deploy to worker nodes
+  # node-role.kubernetes.io/worker: "true"
+
+# Add tolerations if needed for tainted nodes
+tolerations: []
+  # Example:
+  # - key: "offline-node"
+  #   operator: "Equal"
+  #   value: "true"
+  #   effect: "NoSchedule"

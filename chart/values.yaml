@@ -1,0 +1,192 @@
+# Global values
+global:
+  # Optional registry prefix for offline/air-gapped environments
+  # Examples:
+  #   - "myregistry.local:5000"
+  #   - "altregistry.dev.kube"
+  #   - "harbor.internal.com/platform"
+  # If empty, image.repository is used as-is (pulls from Docker Hub or specified registry)
+  imageRegistry: ""
+
+  # Optional namespace override.
+  # If empty, the Helm release namespace (.Release.Namespace) is used.
+  namespaceOverride: ""
+
+# Number of toolbox pods
+replicaCount: 1
+
+image:
+  # Repository WITHOUT registry prefix (unless you want to hard-code full path here).
+  # For offline deployments, this will be combined with global.imageRegistry
+  # Examples:
+  #   - "ultimate-k8s-toolbox"
+  #   - "platform/ultimate-k8s-toolbox"
+  repository: "ultimate-k8s-toolbox"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Image pull secrets for private registries
+# For offline environments, create a secret with registry credentials:
+#   kubectl create secret docker-registry regcred \
+#     --docker-server=myregistry.local:5000 \
+#     --docker-username=myuser \
+#     --docker-password=mypass \
+#     --docker-email=myemail@example.com
+imagePullSecrets: []
+  # - name: regcred
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # If name is empty and create=true, a SA named after the release will be created.
+  # If you want to reuse an existing SA (e.g. mongodb-operator, admin-sa) set:
+  #   create: false
+  #   name: existing-sa-name
+  name: ""
+  annotations: {}
+  # Example annotations:
+  #   eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-role
+
+podAnnotations: {}
+  # Example:
+  #   prometheus.io/scrape: "true"
+  #   prometheus.io/port: "9090"
+
+podLabels: {}
+  # Example:
+  #   environment: production
+  #   team: platform
+
+# Resource limits and requests
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+
+# Node selection
+nodeSelector: {}
+  # Example:
+  #   disktype: ssd
+  #   node-role.kubernetes.io/worker: "true"
+
+# Tolerations for node taints
+tolerations: []
+  # Example:
+  # - key: "key1"
+  #   operator: "Equal"
+  #   value: "value1"
+  #   effect: "NoSchedule"
+
+# Pod affinity/anti-affinity rules
+affinity: {}
+  # Example:
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #       - matchExpressions:
+  #         - key: kubernetes.io/hostname
+  #           operator: In
+  #           values:
+  #           - node1
+  #           - node2
+
+# Security context for the pod
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Security context for the container
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+    add:
+      - NET_ADMIN  # Required for network troubleshooting tools
+      - NET_RAW    # Required for ping and network diagnostics
+  readOnlyRootFilesystem: false
+
+container:
+  # Command/args are kept configurable so you can tweak startup logic if needed.
+  command: ["/bin/bash", "-c"]
+  args:
+    - |
+      echo "==========================================";
+      echo "Ultimate Kubernetes Toolbox Pod Ready";
+      echo "==========================================";
+      echo "";
+      echo "Pod Name: $HOSTNAME";
+      echo "Namespace: ${POD_NAMESPACE:-default}";
+      echo "";
+      echo "Available tools:";
+      echo "  - mongosh (MongoDB Shell)";
+      echo "  - kubectl (Kubernetes CLI)";
+      echo "  - tridentctl (NetApp Trident CLI)";
+      echo "  - Network tools (ping, curl, wget, netcat, nslookup, dig, traceroute)";
+      echo "  - And more...";
+      echo "";
+      echo "To access this pod:";
+      echo "  kubectl -n ${POD_NAMESPACE:-default} exec -it $HOSTNAME -- bash";
+      echo "";
+      echo "==========================================";
+      tail -f /dev/null
+
+  # Environment variables
+  env: []
+    # Example:
+    # - name: MONGODB_URI
+    #   value: "mongodb://mongodb.mongodb.svc.cluster.local:27017"
+    # - name: CUSTOM_VAR
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: my-secret
+    #       key: my-key
+
+  # Volume mounts
+  volumeMounts: []
+    # Example:
+    # - name: config
+    #   mountPath: /config
+    #   readOnly: true
+
+# Volumes
+volumes: []
+  # Example:
+  # - name: config
+  #   configMap:
+  #     name: my-config
+
+# Liveness probe (optional)
+livenessProbe:
+  enabled: false
+  exec:
+    command:
+      - /bin/bash
+      - -c
+      - "ps aux | grep -v grep | grep 'tail -f /dev/null'"
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+# Readiness probe (optional)
+readinessProbe:
+  enabled: false
+  exec:
+    command:
+      - /bin/bash
+      - -c
+      - "ps aux | grep -v grep | grep 'tail -f /dev/null'"
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3

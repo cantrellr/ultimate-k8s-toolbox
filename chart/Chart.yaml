@@ -1,0 +1,15 @@
+apiVersion: v2
+name: ultimate-k8s-toolbox
+description: Ultimate Kubernetes toolbox pod with MongoDB tools, kubectl, tridentctl, networking utilities and more
+type: application
+version: 0.1.0           # chart version
+appVersion: "1.0.0"      # underlying toolbox image version (informational)
+keywords:
+  - kubernetes
+  - toolbox
+  - mongodb
+  - debugging
+  - troubleshooting
+maintainers:
+  - name: Platform Team
+home: https://github.com/your-org/ultimate-k8s-toolbox

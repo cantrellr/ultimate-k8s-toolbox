@@ -1,0 +1,36 @@
+# MongoDB namespace deployment with custom service account
+# This example shows deployment into a MongoDB namespace reusing existing RBAC
+
+global:
+  imageRegistry: "altregistry.dev.kube"
+  namespaceOverride: "mongodb"
+
+image:
+  repository: "platform/ultimate-k8s-toolbox"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: altregistry-secret
+
+serviceAccount:
+  # Reuse existing MongoDB operator service account
+  create: false
+  name: "mongodb-operator"
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "1"
+    memory: "2Gi"
+
+podLabels:
+  app: mongodb-toolbox
+  team: database
+
+container:
+  env:
+    - name: MONGODB_URI
+      value: "mongodb://mongodb.mongodb.svc.cluster.local:27017"
