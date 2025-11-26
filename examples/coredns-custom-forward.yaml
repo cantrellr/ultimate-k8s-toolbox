@@ -1,0 +1,62 @@
+# CoreDNS ConfigMap Patch for Custom DNS Forwarding
+# 
+# This patch configures CoreDNS to forward DNS queries for specific domains
+# to custom DNS servers instead of the default upstream resolvers.
+#
+# Domains forwarded:
+#   - *.k8.cantrellcloud.net (note: cluster domain, handled by kubernetes plugin)
+#   - *.cantrellcloud.net  
+#   - *.cantrelloffice.cloud
+#
+# DNS Servers: 172.16.10.11, 172.16.10.12
+#
+# For RKE2 clusters, the ConfigMap is named: rke2-coredns-rke2-coredns
+#
+# Apply with:
+#   kubectl apply -f coredns-custom-forward.yaml
+#
+# After applying, restart CoreDNS:
+#   kubectl rollout restart deployment rke2-coredns-rke2-coredns -n kube-system
+#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rke2-coredns-rke2-coredns
+  namespace: kube-system
+data:
+  Corefile: |
+    .:53 {
+        errors
+        health {
+            lameduck 10s
+        }
+        ready
+        kubernetes k8.cantrellcloud.net cluster.local in-addr.arpa ip6.arpa {
+            pods insecure
+            fallthrough in-addr.arpa ip6.arpa
+            ttl 30
+        }
+        prometheus 0.0.0.0:9153
+        forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
+    }
+    # Forward .cantrellcloud.net to internal DNS servers
+    # (excludes k8.cantrellcloud.net which is handled by kubernetes plugin above)
+    cantrellcloud.net:53 {
+        errors
+        cache 30
+        forward . 172.16.10.11 172.16.10.12 {
+            policy sequential
+        }
+    }
+    # Forward .cantrelloffice.cloud to internal DNS servers
+    cantrelloffice.cloud:53 {
+        errors
+        cache 30
+        forward . 172.16.10.11 172.16.10.12 {
+            policy sequential
+        }
+    }

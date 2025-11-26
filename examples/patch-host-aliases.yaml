@@ -1,0 +1,17 @@
+# Patch file to add hostAliases to the toolbox deployment
+# This adds entries to /etc/hosts inside the pod
+#
+# Apply with:
+#   kubectl patch deployment k8admin-toolbox-ultimate-k8s-toolbox -n toolbox --patch-file patch-host-aliases.yaml
+#
+# Or using strategic merge:
+#   kubectl patch deployment k8admin-toolbox-ultimate-k8s-toolbox -n toolbox --type=strategic --patch-file patch-host-aliases.yaml
+
+spec:
+  template:
+    spec:
+      hostAliases:
+        - ip: "10.0.69.61"
+          hostnames:
+            - "kuberegistry"
+            - "kuberegistry.k8.cantrellcloud.net"
