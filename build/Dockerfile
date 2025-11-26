@@ -90,9 +90,16 @@ RUN MONGOSH_VERSION="2.3.7" && \
 # Install MongoDB Database Tools (mongodump, mongorestore, bsondump, mongostat, etc.)
 RUN MONGO_TOOLS_VERSION="100.10.0" && \
     ARCH=$(dpkg --print-architecture) && \
-    wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-${MONGO_TOOLS_VERSION}.deb && \
-    dpkg -i mongodb-database-tools-ubuntu2404-x86_64-${MONGO_TOOLS_VERSION}.deb || apt-get install -f -y && \
-    rm mongodb-database-tools-ubuntu2404-x86_64-${MONGO_TOOLS_VERSION}.deb
+    if [ "$ARCH" = "amd64" ]; then \
+        MONGO_ARCH="x86_64"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        MONGO_ARCH="arm64"; \
+    else \
+        echo "Unsupported architecture: $ARCH" && exit 1; \
+    fi && \
+    wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.deb && \
+    dpkg -i mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.deb || apt-get install -f -y && \
+    rm mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.deb
 
 # Verify MongoDB tools installation
 RUN mongosh --version && \
