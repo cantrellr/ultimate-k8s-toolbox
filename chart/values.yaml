@@ -1,3 +1,8 @@
+workspace:
+  enabled: true
+  size: 10Gi
+  storageClass: tridentsvm-nfs-latebinding
+
 # Global values
 global:
   # Optional registry prefix for offline/air-gapped environments

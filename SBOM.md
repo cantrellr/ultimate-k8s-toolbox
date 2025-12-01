@@ -43,7 +43,7 @@ Helm Chart SHA256: f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c
 sha256sum -c <<< "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  images/ultimate-k8s-toolbox-v1.0.0.tar"
 
 # Verify Helm chart
-sha256sum -c <<< "f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4  charts/ultimate-k8s-toolbox-0.1.0.tgz"
+sha256sum -c <<< "f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4  charts/ultimate-k8s-toolbox-chart-1.0.1.tgz"
 ```
 
 ### CycloneDX JSON Hash Format
@@ -264,7 +264,7 @@ CHART_HASH=$(jq -r '.metadata.properties[] | select(.name=="chart_hash") | .valu
 echo "${IMAGE_HASH}  images/ultimate-k8s-toolbox-v1.0.0.tar" | sha256sum -c -
 
 # Verify chart
-echo "${CHART_HASH}  charts/ultimate-k8s-toolbox-0.1.0.tgz" | sha256sum -c -
+echo "${CHART_HASH}  charts/ultimate-k8s-toolbox-chart-1.0.1.tgz" | sha256sum -c -
 ```
 
 ## Best Practices

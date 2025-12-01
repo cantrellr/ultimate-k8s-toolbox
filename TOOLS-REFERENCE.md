@@ -13,14 +13,14 @@ This document catalogs every tool installed in the toolbox image and provides qu
 | Tool | Version | Purpose |
 |------|---------|---------|
 | `mongosh` | 2.3.7 | Modern MongoDB Shell |
-| `mongodump` | 100.10.0 | Database backup utility |
-| `mongorestore` | 100.10.0 | Database restore utility |
-| `bsondump` | 100.10.0 | BSON file inspector |
-| `mongostat` | 100.10.0 | Real-time MongoDB stats |
-| `mongotop` | 100.10.0 | Track MongoDB read/write activity |
-| `mongofiles` | 100.10.0 | GridFS file management |
-| `mongoexport` | 100.10.0 | Export data to JSON/CSV |
-| `mongoimport` | 100.10.0 | Import data from JSON/CSV |
+| `mongodump` | 100.13.0 | Database backup utility |
+| `mongorestore` | 100.13.0 | Database restore utility |
+| `bsondump` | 100.13.0 | BSON file inspector |
+| `mongostat` | 100.13.0 | Real-time MongoDB stats |
+| `mongotop` | 100.13.0 | Track MongoDB read/write activity |
+| `mongofiles` | 100.13.0 | GridFS file management |
+| `mongoexport` | 100.13.0 | Export data to JSON/CSV |
+| `mongoimport` | 100.13.0 | Import data from JSON/CSV |
 
 ### Quick Examples
 

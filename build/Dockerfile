@@ -4,7 +4,7 @@ FROM ubuntu:24.04
 # Metadata
 LABEL maintainer="Platform Team"
 LABEL description="Swiss-army knife for Kubernetes, MongoDB, Ops Manager, networking, storage, and cluster inspection - True Admin Workstation"
-LABEL version="1.0.0"
+LABEL version="1.0.1"
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -89,7 +89,7 @@ RUN MONGOSH_VERSION="2.3.7" && \
     rm mongodb-mongosh_${MONGOSH_VERSION}_${ARCH}.deb
 
 # Install MongoDB Database Tools (mongodump, mongorestore, bsondump, mongostat, etc.)
-RUN MONGO_TOOLS_VERSION="100.10.0" && \
+RUN MONGO_TOOLS_VERSION="100.13.0" && \
     ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "amd64" ]; then \
         MONGO_ARCH="x86_64"; \
@@ -98,9 +98,13 @@ RUN MONGO_TOOLS_VERSION="100.10.0" && \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1; \
     fi && \
-    wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.deb && \
-    dpkg -i mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.deb || apt-get install -f -y && \
-    rm mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.deb
+    TOOLS_TGZ="mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}.tgz" && \
+    wget -q "https://fastdl.mongodb.org/tools/db/${TOOLS_TGZ}" && \
+    mkdir -p /tmp/mongo-tools && \
+    tar -xzf "${TOOLS_TGZ}" -C /tmp/mongo-tools && \
+    cp -f /tmp/mongo-tools/mongodb-database-tools-ubuntu2404-${MONGO_ARCH}-${MONGO_TOOLS_VERSION}/bin/* /usr/local/bin/ && \
+    chmod +x /usr/local/bin/mongo* /usr/local/bin/bsondump /usr/local/bin/mongostat /usr/local/bin/mongotop || true && \
+    rm -rf /tmp/mongo-tools "${TOOLS_TGZ}"
 
 # Verify MongoDB tools installation
 RUN mongosh --version && \

@@ -90,11 +90,11 @@ Running: Ubuntu 24.04 (Linux 6.8.0-87-generic)
 helm template offline-test . \
   --set global.imageRegistry="harbor.internal.com" \
   --set image.repository="platform/ultimate-k8s-toolbox" \
-  --set image.tag="v1.0.0"
+  --set image.tag="v1.0.1"
 ```
 
 **Result:** ✅ SUCCESS
-- Image path correctly constructed: `harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.0`
+- Image path correctly constructed: `harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.1`
 - Namespace override working: `namespace: mongodb`
 - Service account reuse working: `serviceAccountName: mongodb-operator`
 - Image pull secrets applied: `imagePullSecrets: [{name: regcred}]`
@@ -106,7 +106,7 @@ helm template offline-test . \
 - Image path construction verified for multiple scenarios:
   - No registry: `ubuntu:24.04`
   - Simple registry: `myregistry.local:5000/platform/ultimate-k8s-toolbox:latest`
-  - Complex registry: `harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.0`
+  - Complex registry: `harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.1`
 
 ### ✅ Flexible Configuration
 - Namespace override (`global.namespaceOverride`)

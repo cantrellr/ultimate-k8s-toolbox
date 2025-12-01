@@ -208,15 +208,15 @@ cat <<'CMD'
 # Package the chart
 helm package ../chart
 
-# This creates: ultimate-k8s-toolbox-0.1.0.tgz
+# This creates: ultimate-k8s-toolbox-chart-1.0.1.tgz
 
 # Install from package
-helm install my-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
+helm install my-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
   -f values-offline.yaml \
   -n toolbox --create-namespace
 
 # Or install from URL (if hosted)
-helm install my-toolbox https://charts.example.co../chart-0.1.0.tgz \
+helm install my-toolbox https://charts.example.co../ultimate-k8s-toolbox-chart-1.0.1.tgz \
   -f values-offline.yaml \
   -n toolbox
 CMD

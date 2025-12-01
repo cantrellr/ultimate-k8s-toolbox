@@ -146,6 +146,11 @@ spec:
           {{- omit .Values.readinessProbe "enabled" | toYaml | nindent 10 }}
         {{- end }}
         volumeMounts:
+        {{- if .Values.workspace.enabled }}
+        - name: workspace
+          mountPath: /workspace
+          readOnly: false
+        {{- end }}
         {{- if .Values.customCA.enabled }}
         - name: custom-ca-certs
           mountPath: {{ .Values.customCA.mountPath | default "/etc/ssl/custom-ca" }}
@@ -158,6 +163,11 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
       volumes:
+      {{- if .Values.workspace.enabled }}
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: {{ include "ultimate-k8s-toolbox.fullname" . }}-workspace
+      {{- end }}
       {{- if .Values.customCA.enabled }}
       - name: custom-ca-certs
         secret:

@@ -5,8 +5,8 @@ description: |
   for debugging, troubleshooting, and managing Kubernetes clusters. Supports air-gapped
   deployments, custom CA certificates, and multi-architecture builds (amd64/arm64).
 type: application
-version: 1.0.0           # Chart version - follows SemVer
-appVersion: "1.0.0"      # Toolbox image version - "First Flight" release
+version: 1.0.1           # Chart version - follows SemVer
+appVersion: "1.0.1"      # Toolbox image version - patch release
 keywords:
   - kubernetes
   - toolbox

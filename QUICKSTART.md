@@ -141,7 +141,7 @@ docker save ultimate-k8s-toolbox:v1.0.0 -o toolbox.tar
 helm package ./chart
 
 # 3. Create bundle
-tar -czf offline-bundle.tar.gz toolbox.tar ultimate-k8s-toolbox-*.tgz values-offline.yaml
+tar -czf offline-bundle.tar.gz toolbox.tar ultimate-k8s-toolbox-chart-*.tgz values-offline.yaml
 
 # 4. Transfer to offline environment
 
@@ -150,7 +150,7 @@ tar -xzf offline-bundle.tar.gz
 docker load -i toolbox.tar
 docker tag ultimate-k8s-toolbox:v1.0.0 myregistry:5000/toolbox:v1.0.0
 docker push myregistry:5000/toolbox:v1.0.0
-helm install my-toolbox ultimate-k8s-toolbox-*.tgz -f values-offline.yaml -n toolbox
+helm install my-toolbox ultimate-k8s-toolbox-chart-*.tgz -f values-offline.yaml -n toolbox
 ```
 
 ## 9. Values File Examples

@@ -3,8 +3,8 @@
 # Runtime: nerdctl + containerd
 
 CHART_NAME := ultimate-k8s-toolbox
-CHART_VERSION := 0.1.0
-BUNDLE_VERSION := v1.0.0
+CHART_VERSION := 1.0.1
+BUNDLE_VERSION := v1.0.1
 TOOLBOX_IMAGE_REPO := $(CHART_NAME)
 TOOLBOX_IMAGE_TAG := $(BUNDLE_VERSION)
 TOOLBOX_IMAGE := $(TOOLBOX_IMAGE_REPO):$(TOOLBOX_IMAGE_TAG)
@@ -236,6 +236,10 @@ package-chart:
 	@echo ""
 	@echo "Packaging chart..."
 	@helm package chart/ -d $(CHARTS_DIR)
+	@# Rename chart file to include '-chart' for clarity
+	@ORIG_CHART_FILE=$(CHARTS_DIR)/$(CHART_NAME)-$(CHART_VERSION).tgz; \
+	NEW_CHART_FILE=$(CHARTS_DIR)/$(CHART_NAME)-chart-$(CHART_VERSION).tgz; \
+	if [ -f "$$ORIG_CHART_FILE" ]; then mv "$$ORIG_CHART_FILE" "$$NEW_CHART_FILE"; fi
 	@echo "✓ Chart packaged"
 	@ls -lh $(CHARTS_DIR)/*.tgz
 
@@ -307,9 +311,15 @@ create-sbom:
 	@# Capture tarball hash
 	@IMAGE_TAR_HASH=$$(sha256sum $(IMAGES_DIR)/$(CHART_NAME)-$(BUNDLE_VERSION).tar | cut -d' ' -f1); \
 	echo "$$IMAGE_TAR_HASH" > $(BUNDLE_DIR)/.image-tar-hash
-	@# Capture chart hash
-	@CHART_HASH=$$(sha256sum $(CHARTS_DIR)/$(CHART_NAME)-$(CHART_VERSION).tgz | cut -d' ' -f1); \
-	echo "$$CHART_HASH" > $(BUNDLE_DIR)/.chart-hash
+	# Capture chart hash (auto-detect packaged chart filename)
+	@CHART_TGZ=$$(ls -1 $(CHARTS_DIR)/$(CHART_NAME)-chart-*.tgz | head -1); \
+	if [ -z "$$CHART_TGZ" ]; then \
+		echo "✗ No chart package found in $(CHARTS_DIR)"; \
+		exit 1; \
+	fi; \
+	CHART_HASH=$$(sha256sum "$$CHART_TGZ" | cut -d' ' -f1); \
+	echo "$$CHART_HASH" > $(BUNDLE_DIR)/.chart-hash; \
+	echo $$(basename "$$CHART_TGZ") > $(BUNDLE_DIR)/.chart-filename
 	@echo "✓ Hashes captured"
 	@echo ""
 	@# Create SBOM header
@@ -330,7 +340,7 @@ create-sbom:
 	@echo "Image Tarball ($(CHART_NAME)-$(BUNDLE_VERSION).tar):" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "  sha256:$$(cat $(BUNDLE_DIR)/.image-tar-hash)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
-	@echo "Helm Chart ($(CHART_NAME)-$(CHART_VERSION).tgz):" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "Helm Chart ($$(cat $(BUNDLE_DIR)/.chart-filename)):" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "  sha256:$$(cat $(BUNDLE_DIR)/.chart-hash)" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "=================================" >> $(BUNDLE_DIR)/SBOM.txt
@@ -359,7 +369,7 @@ create-sbom:
 	@echo "   Purpose: Interactive MongoDB shell" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "2. MongoDB Database Tools" >> $(BUNDLE_DIR)/SBOM.txt
-	@echo "   Version: 100.10.0" >> $(BUNDLE_DIR)/SBOM.txt
+	@echo "   Version: 100.13.0" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "   License: Apache-2.0" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "   Source: https://github.com/mongodb/mongo-tools" >> $(BUNDLE_DIR)/SBOM.txt
 	@echo "   Tools: mongodump, mongorestore, mongoexport, mongoimport," >> $(BUNDLE_DIR)/SBOM.txt
@@ -629,7 +639,7 @@ create-sbom:
 	echo '      ]' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    "tools": [' >> $(BUNDLE_DIR)/SBOM.json; \
-	echo '      { "vendor": "CycloneDX", "name": "ultimate-k8s-toolbox-makefile", "version": "1.0.0" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      { "vendor": "CycloneDX", "name": "ultimate-k8s-toolbox-makefile", "version": "1.0.1" }' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    ]' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '  },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '  "components": [' >> $(BUNDLE_DIR)/SBOM.json; \
@@ -651,10 +661,11 @@ create-sbom:
 	echo '        { "alg": "SHA-256", "content": "'$$IMAGE_TAR_HASH'" }' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '      ]' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
+	CHART_FILE=$$(cat $(BUNDLE_DIR)/.chart-filename); \
 	echo '    {' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '      "type": "file",' >> $(BUNDLE_DIR)/SBOM.json; \
-	echo '      "name": "$(CHART_NAME)-$(CHART_VERSION).tgz",' >> $(BUNDLE_DIR)/SBOM.json; \
-	echo '      "version": "$(CHART_VERSION)",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "name": "'$$CHART_FILE'",' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      "version": "'$$CHART_FILE'",' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '      "description": "Helm chart package",' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '      "hashes": [' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '        { "alg": "SHA-256", "content": "'$$CHART_HASH'" }' >> $(BUNDLE_DIR)/SBOM.json; \
@@ -662,7 +673,7 @@ create-sbom:
 	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    { "type": "operating-system", "name": "ubuntu", "version": "24.04", "licenses": [{"license": {"id": "Proprietary"}}] },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    { "type": "application", "name": "mongosh", "version": "2.3.7", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb-js/mongosh@2.3.7" },' >> $(BUNDLE_DIR)/SBOM.json; \
-	echo '    { "type": "application", "name": "mongodb-database-tools", "version": "100.10.0", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb/mongo-tools@100.10.0" },' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '    { "type": "application", "name": "mongodb-database-tools", "version": "100.13.0", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/mongodb/mongo-tools@100.13.0" },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    { "type": "application", "name": "kubectl", "version": "1.31.4", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/kubernetes/kubernetes@v1.31.4" },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    { "type": "application", "name": "helm", "version": "3.x", "licenses": [{"license": {"id": "Apache-2.0"}}], "purl": "pkg:github/helm/helm@3.x" },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    { "type": "application", "name": "yq", "version": "4.45.1", "licenses": [{"license": {"id": "MIT"}}], "purl": "pkg:github/mikefarah/yq@v4.45.1" },' >> $(BUNDLE_DIR)/SBOM.json; \

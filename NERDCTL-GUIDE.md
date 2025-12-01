@@ -78,16 +78,16 @@ If you need to interact with images directly:
 nerdctl --namespace k8s.io images
 
 # Run a container
-nerdctl --namespace k8s.io run -it --rm ultimate-k8s-toolbox:v1.0.0 bash
+nerdctl --namespace k8s.io run -it --rm ultimate-k8s-toolbox:v1.0.1 bash
 
 # Save image for offline transfer
-nerdctl --namespace k8s.io save ultimate-k8s-toolbox:v1.0.0 -o toolbox.tar
+nerdctl --namespace k8s.io save ultimate-k8s-toolbox:v1.0.1 -o toolbox.tar
 
 # Load image from tarball
 nerdctl --namespace k8s.io load -i toolbox.tar
 
 # Remove image
-nerdctl --namespace k8s.io rmi ultimate-k8s-toolbox:v1.0.0
+nerdctl --namespace k8s.io rmi ultimate-k8s-toolbox:v1.0.1
 
 # System prune
 nerdctl --namespace k8s.io system prune -f
@@ -179,7 +179,7 @@ If you were previously using Docker:
 
 ```bash
 # With Docker
-docker save ultimate-k8s-toolbox:v1.0.0 -o toolbox.tar
+docker save ultimate-k8s-toolbox:v1.0.1 -o toolbox.tar
 
 # Load into nerdctl
 nerdctl --namespace k8s.io load -i toolbox.tar
@@ -203,7 +203,7 @@ nerdctl --namespace k8s.io run -it myimage
 
 ```bash
 # Check if K8s can see the image
-kubectl run test --image=ultimate-k8s-toolbox:v1.0.0 --dry-run=client -o yaml
+kubectl run test --image=ultimate-k8s-toolbox:v1.0.1 --dry-run=client -o yaml
 ```
 
 ## Best Practices

@@ -48,7 +48,7 @@ ls -lh ultimate-k8s-toolbox-v1.0.0.tar
 cd /path/to/charts
 helm package chart/
 
-# This creates: ultimate-k8s-toolbox-0.1.0.tgz
+# This creates: ultimate-k8s-toolbox-chart-1.0.1.tgz
 ```
 
 ### Step 4: Create Transfer Bundle
@@ -57,7 +57,7 @@ helm package chart/
 # Create a directory for all offline artifacts
 mkdir -p offline-bundle
 cp ultimate-k8s-toolbox-v1.0.0.tar offline-bundle/
-cp ultimate-k8s-toolbox-0.1.0.tgz offline-bundle/
+cp ultimate-k8s-toolbox-chart-1.0.1.tgz offline-bundle/
 cp ultimate-k8s-toolbox/values-offline.yaml offline-bundle/
 
 # Optional: Create a manifest file
@@ -69,7 +69,7 @@ Created: $(date)
 
 Contents:
 - ultimate-k8s-toolbox-v1.0.0.tar (Docker image)
-- ultimate-k8s-toolbox-0.1.0.tgz (Helm chart)
+- ultimate-k8s-toolbox-chart-1.0.1.tgz (Helm chart)
 - values-offline.yaml (Configuration template)
 EOF
 
@@ -200,7 +200,7 @@ resources:
 
 ```bash
 # Install the chart
-helm install my-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
+helm install my-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
   -f values-offline.yaml \
   -n toolbox
 
@@ -235,7 +235,7 @@ Deploy to multiple namespaces with different configurations:
 
 ### Development Environment
 ```bash
-helm install dev-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
+helm install dev-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
   --set global.imageRegistry="harbor.internal.company.com" \
   --set image.repository="platform/ultimate-k8s-toolbox" \
   --set image.tag="v1.0.0" \
@@ -245,7 +245,7 @@ helm install dev-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
 
 ### Production Environment
 ```bash
-helm install prod-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
+helm install prod-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
   --set global.imageRegistry="harbor.internal.company.com" \
   --set image.repository="platform/ultimate-k8s-toolbox" \
   --set image.tag="v1.0.0" \
