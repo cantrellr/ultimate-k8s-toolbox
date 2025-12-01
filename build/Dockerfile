@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 FROM ubuntu:24.04
 
 # Metadata
@@ -182,7 +183,7 @@ RUN mkdir -p /usr/local/share/ca-certificates/custom
 
 # Add comprehensive CA trust update script
 # This script handles multiple certificate sources and formats
-RUN cat > /usr/local/bin/update-ca-trust.sh << 'CATRUSTSCRIPT'
+RUN cat > /usr/local/bin/update-ca-trust.sh <<'CATRUSTSCRIPT'
 #!/bin/bash
 # =============================================================================
 # CA Trust Update Script for Ultimate K8s Toolbox
