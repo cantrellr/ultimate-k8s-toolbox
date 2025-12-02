@@ -59,18 +59,18 @@ print_warning() { echo -e "${COLOR_YELLOW}⚠ $1${COLOR_RESET}"; }
 print_info() { echo -e "${COLOR_CYAN}ℹ $1${COLOR_RESET}"; }
 
 # Default configuration (can be overridden by environment variables or flags)
-REGISTRY=${REGISTRY:-"myregistry.local:5000"}
+REGISTRY=${REGISTRY:-"kuberegistry.k8.cantrellcloud.net:8443/library"}
 NAMESPACE=${NAMESPACE:-"toolbox"}
-RELEASE_NAME=${RELEASE_NAME:-"offline-toolbox"}
+RELEASE_NAME=${RELEASE_NAME:-"toolbox"}
 IMAGE_REPO=${IMAGE_REPO:-"ultimate-k8s-toolbox"}
-IMAGE_TAG=${IMAGE_TAG:-"v1.0.0"}
+IMAGE_TAG=${IMAGE_TAG:-"v1.0.1"}
 CA_SECRET_NAME=${CA_SECRET_NAME:-"toolbox-ca-certs"}
 ROOT_CA_PATH=${ROOT_CA_PATH:-""}
 SUBORDINATE_CA_PATH=${SUBORDINATE_CA_PATH:-""}
-SKIP_CA_PROMPT=false
+SKIP_CA_PROMPT=true
 SKIP_REGISTRY_PUSH=false
 DRY_RUN=false
-ENABLE_CA=false
+ENABLE_CA=true
 
 # Show help
 show_help() {

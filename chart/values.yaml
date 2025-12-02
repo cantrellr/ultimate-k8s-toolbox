@@ -1,7 +1,11 @@
 workspace:
   enabled: true
+  # By default, use an emptyDir volume for /workspace (ephemeral)
+  # To use a PersistentVolumeClaim instead, set a storageClass name below.
+  # When storageClass is non-empty, a PVC of the given size will be created
+  # and mounted at /workspace.
   size: 10Gi
-  storageClass: tridentsvm-nfs-latebinding
+  storageClass: ""
 
 # Global values
 global:
@@ -68,11 +72,11 @@ podLabels: {}
 # Resource limits and requests
 resources:
   requests:
-    cpu: "100m"
-    memory: "256Mi"
+    cpu: "10m"
+    memory: "64Mi"
   limits:
-    cpu: "2"
-    memory: "4Gi"
+    cpu: "500m"
+    memory: "512Mi"
 
 # Node selection
 nodeSelector: {}

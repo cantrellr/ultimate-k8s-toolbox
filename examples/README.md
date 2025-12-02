@@ -68,6 +68,17 @@ cp values-online.yaml ../my-custom-values.yaml
 helm install my-toolbox ../chart -f my-custom-values.yaml
 ```
 
+## Workspace Storage
+
+By default, `/workspace` is an ephemeral `emptyDir`. To persist it, set a StorageClass and size to create a PVC:
+
+```bash
+helm install my-toolbox ../chart \
+  --set workspace.storageClass=<your-storage-class> \
+  --set workspace.size=20Gi \
+  -n toolbox --create-namespace
+```
+
 ## See Also
 
 - [QUICKSTART.md](../QUICKSTART.md) - Quick deployment guide

@@ -165,8 +165,12 @@ spec:
       volumes:
       {{- if .Values.workspace.enabled }}
       - name: workspace
+        {{- if .Values.workspace.storageClass }}
         persistentVolumeClaim:
           claimName: {{ include "ultimate-k8s-toolbox.fullname" . }}-workspace
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
       {{- end }}
       {{- if .Values.customCA.enabled }}
       - name: custom-ca-certs

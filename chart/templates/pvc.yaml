@@ -1,4 +1,4 @@
-{{- if .Values.workspace.enabled }}
+{{- if and .Values.workspace.enabled .Values.workspace.storageClass }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -11,5 +11,5 @@ spec:
   resources:
     requests:
       storage: {{ .Values.workspace.size | default "10Gi" }}
-  storageClassName: {{ .Values.workspace.storageClass | default "tridentsvm-nfs-latebinding" }}
+  storageClassName: {{ .Values.workspace.storageClass }}
 {{- end }}

@@ -71,6 +71,17 @@ helm uninstall my-toolbox -n toolbox
 
 ## 4. Configuration Examples
 
+### Workspace Storage
+By default, the toolbox mounts `/workspace` as an ephemeral `emptyDir` (non-persistent).
+To persist `/workspace`, set a StorageClass and size to create a PVC:
+
+```bash
+helm install my-toolbox ./chart \
+  --set workspace.storageClass=<your-storage-class> \
+  --set workspace.size=20Gi \
+  -n toolbox --create-namespace
+```
+
 ### Using Existing Service Account
 ```bash
 helm install my-toolbox ./chart \

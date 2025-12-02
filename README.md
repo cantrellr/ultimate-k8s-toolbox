@@ -84,9 +84,9 @@
 │  │                                                                        │  │
 │  │   ┌────────────────────────────────────────────────────────────────┐   │  │
 │  │   │                     SERVICE ACCOUNT                            │   │  │
-│  │   │  • Optional ClusterRole for cluster-wide access                │   │  │
-│  │   │  • Optional Role for namespace-scoped access                   │   │  │
-│  │   │  • Configurable RBAC permissions                               │   │  │
+│  │   │  • Configurable ServiceAccount (create/use existing)           │   │  │
+│  │   │  • Add annotations as needed                                   │   │  │
+│  │   │  • Bind RBAC externally if required                            │   │  │
 │  │   └────────────────────────────────────────────────────────────────┘   │  │
 │  └────────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -315,18 +315,39 @@ helm install my-toolbox ./chart \
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `image.repository` | Image repository | `ultimate-k8s-toolbox` |
-| `image.tag` | Image tag | `1.0.0` |
+| `image.tag` | Image tag | `latest` |
 | `global.imageRegistry` | Registry for offline deployments | `""` |
 | `replicaCount` | Number of replicas | `1` |
 | `serviceAccount.create` | Create ServiceAccount | `true` |
-| `rbac.create` | Create RBAC resources | `true` |
-| `rbac.clusterRole` | Create ClusterRole (vs Role) | `true` |
+| `workspace.enabled` | Mount `/workspace` volume | `true` |
+| `workspace.storageClass` | PVC StorageClass (empty = use `emptyDir`) | `""` |
+| `workspace.size` | PVC size (used only if `storageClass` set) | `10Gi` |
 | `customCA.enabled` | Enable custom CA trust | `false` |
 | `customCA.secretName` | Secret containing CA certs | `toolbox-ca-certs` |
-| `resources.requests.cpu` | CPU request | `100m` |
-| `resources.requests.memory` | Memory request | `256Mi` |
-| `resources.limits.cpu` | CPU limit | `2` |
-| `resources.limits.memory` | Memory limit | `4Gi` |
+| `resources.requests.cpu` | CPU request | `10m` |
+| `resources.requests.memory` | Memory request | `64Mi` |
+| `resources.limits.cpu` | CPU limit | `500m` |
+| `resources.limits.memory` | Memory limit | `512Mi` |
+
+### Workspace Storage
+
+- By default, the toolbox mounts `/workspace` as an ephemeral `emptyDir`. Data does not persist across pod restarts.
+- To persist `/workspace`, set a StorageClass and size to create and mount a PVC.
+
+Example (enable PVC):
+
+```yaml
+workspace:
+  storageClass: tridentsvm-nfs-latebinding  # any valid StorageClass
+  size: 20Gi                                 # PVC size
+```
+
+Leaving `workspace.storageClass` empty (default) uses `emptyDir`:
+
+```yaml
+workspace:
+  storageClass: ""  # default; /workspace is emptyDir (ephemeral)
+```
 
 ### Example values.yaml
 

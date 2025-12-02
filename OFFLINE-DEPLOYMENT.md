@@ -454,6 +454,11 @@ The `deploy-offline.sh` script supports CA certificate import:
   --ca-secret-name my-custom-ca-certs
 ```
 
+Notes:
+- If no local certificate files are provided, the script will automatically look for an existing secret named `toolbox-ca-certs` (or the value of `--ca-secret-name`) in the target namespace and enable CA trust if found.
+- A warning is shown only when CA import is enabled but neither certificate files are provided nor an existing secret is present.
+- Run the script as your user (not with sudo) so `kubectl`/`helm` use your kubeconfig and credentials. If Docker access requires elevated permissions, prefer adding your user to the `docker` group instead of running the script with sudo.
+
 ### Manual CA Certificate Configuration
 
 #### Step 1: Create CA Certificate Secret
