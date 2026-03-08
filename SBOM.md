@@ -35,15 +35,15 @@ The SBOM includes SHA256 hashes for critical artifacts to ensure supply chain in
 ```
 === ARTIFACT HASHES ===
 Image Digest: sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4
-Image Tarball SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-Helm Chart SHA256: f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4
+Image Tarball SHA256: <IMAGE_TARBALL_SHA256>
+Helm Chart SHA256: <CHART_TGZ_SHA256>
 
 === VERIFICATION COMMANDS ===
 # Verify image tarball
-sha256sum -c <<< "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  images/ultimate-k8s-toolbox-v1.0.0.tar"
+sha256sum -c <<< "<IMAGE_TARBALL_SHA256>  images/ultimate-k8s-toolbox-v1.0.2.tar"
 
 # Verify Helm chart
-sha256sum -c <<< "f4d8e3c2a1b0e9d8c7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4  charts/ultimate-k8s-toolbox-chart-1.0.1.tgz"
+sha256sum -c <<< "<CHART_TGZ_SHA256>  charts/ultimate-k8s-toolbox-chart-1.0.2.tgz"
 ```
 
 ### CycloneDX JSON Hash Format
@@ -134,7 +134,7 @@ dist/offline-bundle/
 
 Both files are included in the final tarball:
 ```
-dist/ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
+dist/ultimate-k8s-toolbox-offline-v1.0.2.tar.gz
 └── offline-bundle/
     ├── SBOM.txt
     └── SBOM.json
@@ -145,7 +145,7 @@ dist/ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
 ### Review SBOM Manually
 ```bash
 # Extract and view text SBOM
-tar -xzf ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
+tar -xzf ultimate-k8s-toolbox-offline-v1.0.2.tar.gz
 cat offline-bundle/SBOM.txt
 ```
 
@@ -244,10 +244,10 @@ sha256sum -c dist/offline-bundle/MANIFEST.txt
 
 # Check image digest after loading
 docker load -i dist/offline-bundle/images/*.tar
-docker inspect ultimate-k8s-toolbox:v1.0.0 --format='{{.Id}}'
+docker inspect ultimate-k8s-toolbox:v1.0.2 --format='{{.Id}}'
 
 # Verify component presence in image
-docker run --rm ultimate-k8s-toolbox:v1.0.0 bash -c "
+docker run --rm ultimate-k8s-toolbox:v1.0.2 bash -c "
   mongosh --version
   kubectl version --client
   python3 --version
@@ -261,10 +261,10 @@ IMAGE_HASH=$(jq -r '.metadata.properties[] | select(.name=="tarball_hash") | .va
 CHART_HASH=$(jq -r '.metadata.properties[] | select(.name=="chart_hash") | .value' offline-bundle/SBOM.json)
 
 # Verify image tarball
-echo "${IMAGE_HASH}  images/ultimate-k8s-toolbox-v1.0.0.tar" | sha256sum -c -
+echo "${IMAGE_HASH}  images/ultimate-k8s-toolbox-v1.0.2.tar" | sha256sum -c -
 
 # Verify chart
-echo "${CHART_HASH}  charts/ultimate-k8s-toolbox-chart-1.0.1.tgz" | sha256sum -c -
+echo "${CHART_HASH}  charts/ultimate-k8s-toolbox-chart-1.0.2.tgz" | sha256sum -c -
 ```
 
 ## Best Practices

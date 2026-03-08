@@ -4,6 +4,9 @@
 set -e
 
 CHART_DIR="./chart"
+EXAMPLES_DIR="./examples"
+VALUES_ONLINE="$EXAMPLES_DIR/values-online.yaml"
+VALUES_OFFLINE="$EXAMPLES_DIR/values-offline.yaml"
 NAMESPACE="toolbox-test"
 RELEASE_NAME="test-toolbox"
 
@@ -80,16 +83,16 @@ test_template() {
     print_success "Default values template render successful"
     
     # Test online values
-    if [ -f "$CHART_DIR/values-online.yaml" ]; then
+    if [ -f "$VALUES_ONLINE" ]; then
         print_info "Testing with online values..."
-        helm template test-render "$CHART_DIR" -f "$CHART_DIR/values-online.yaml" > /dev/null
+        helm template test-render "$CHART_DIR" -f "$VALUES_ONLINE" > /dev/null
         print_success "Online values template render successful"
     fi
     
     # Test offline values
-    if [ -f "$CHART_DIR/values-offline.yaml" ]; then
+    if [ -f "$VALUES_OFFLINE" ]; then
         print_info "Testing with offline values..."
-        helm template test-render "$CHART_DIR" -f "$CHART_DIR/values-offline.yaml" > /dev/null
+        helm template test-render "$CHART_DIR" -f "$VALUES_OFFLINE" > /dev/null
         print_success "Offline values template render successful"
     fi
     
@@ -104,9 +107,17 @@ deploy_chart() {
     kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
     print_success "Namespace $NAMESPACE ready"
     
-    # Install chart with online values (using ubuntu image for testing)
+    # Install chart (using ubuntu image for testing)
+    # Prefer example values if present, but always force the test image to avoid requiring the toolbox image.
+    VALUES_ARGS=()
+    if [ -f "$VALUES_ONLINE" ]; then
+        VALUES_ARGS+=("-f" "$VALUES_ONLINE")
+    fi
+
     helm upgrade --install "$RELEASE_NAME" "$CHART_DIR" \
-        -f "$CHART_DIR/values-online.yaml" \
+        "${VALUES_ARGS[@]}" \
+        --set image.repository="ubuntu" \
+        --set image.tag="24.04" \
         -n "$NAMESPACE" \
         --wait --timeout 5m
     

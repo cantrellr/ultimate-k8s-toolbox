@@ -3,8 +3,8 @@
 # 
 # NOTE: This requires the ultimate-k8s-toolbox image to be published to a public registry
 # Or build and push the image first:
-#   docker build -t myregistry/ultimate-k8s-toolbox:v1.0.0 build/
-#   docker push myregistry/ultimate-k8s-toolbox:v1.0.0
+#   docker build -t myregistry/ultimate-k8s-toolbox:v1.0.2 build/
+#   docker push myregistry/ultimate-k8s-toolbox:v1.0.2
 
 global:
   imageRegistry: ""  # Empty means use default Docker Hub or full image path
@@ -12,7 +12,7 @@ global:
 
 image:
   repository: "ultimate-k8s-toolbox"  # Full-featured toolbox with all tools
-  tag: "v1.0.0"
+  tag: "v1.0.2"
   pullPolicy: IfNotPresent
 
 serviceAccount:

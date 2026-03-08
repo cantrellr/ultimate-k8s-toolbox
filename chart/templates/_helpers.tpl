@@ -93,8 +93,8 @@ Examples:
   3. Offline with project path:
      global.imageRegistry: "harbor.internal.com"
      repository: "platform/ultimate-k8s-toolbox"
-     tag: "v1.0.0"
-     Result: "harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.0"
+     tag: "v1.0.2"
+     Result: "harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.2"
 */}}
 {{- define "ultimate-k8s-toolbox.image" -}}
 {{- $registry := .Values.global.imageRegistry | default "" }}

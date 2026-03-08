@@ -146,7 +146,7 @@ helm install test ./chart -n test --dry-run
 
 ```bash
 # 1. Save image
-docker save ultimate-k8s-toolbox:v1.0.0 -o toolbox.tar
+docker save ultimate-k8s-toolbox:v1.0.2 -o toolbox.tar
 
 # 2. Package chart
 helm package ./chart
@@ -159,8 +159,8 @@ tar -czf offline-bundle.tar.gz toolbox.tar ultimate-k8s-toolbox-chart-*.tgz valu
 # 5. In offline environment:
 tar -xzf offline-bundle.tar.gz
 docker load -i toolbox.tar
-docker tag ultimate-k8s-toolbox:v1.0.0 myregistry:5000/toolbox:v1.0.0
-docker push myregistry:5000/toolbox:v1.0.0
+docker tag ultimate-k8s-toolbox:v1.0.2 myregistry:5000/toolbox:v1.0.2
+docker push myregistry:5000/toolbox:v1.0.2
 helm install my-toolbox ultimate-k8s-toolbox-chart-*.tgz -f values-offline.yaml -n toolbox
 ```
 

@@ -4,7 +4,7 @@ FROM ubuntu:24.04
 # Metadata
 LABEL maintainer="Platform Team"
 LABEL description="Swiss-army knife for Kubernetes, MongoDB, Ops Manager, networking, storage, and cluster inspection - True Admin Workstation"
-LABEL version="1.0.1"
+LABEL version="1.0.2"
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive

@@ -24,7 +24,7 @@ This single command will:
 
 The command creates:
 ```
-ultimate-k8s-toolbox-offline-v1.0.0.tar.gz  (~29MB)
+ultimate-k8s-toolbox-offline-v1.0.2.tar.gz  (~29MB)
 ```
 
 ## Configuration
@@ -34,12 +34,12 @@ Edit the Makefile to customize:
 ```makefile
 # Chart configuration
 CHART_NAME := ultimate-k8s-toolbox
-CHART_VERSION := 0.1.0
-BUNDLE_VERSION := v1.0.0
+CHART_VERSION := 1.0.2
+BUNDLE_VERSION := v1.0.2
 
-# Image configuration (change to your actual toolbox image)
-TOOLBOX_IMAGE_REPO := ubuntu
-TOOLBOX_IMAGE_TAG := 24.04
+# Image configuration
+TOOLBOX_IMAGE_REPO := ultimate-k8s-toolbox
+TOOLBOX_IMAGE_TAG := v1.0.2
 ```
 
 ## Available Commands
@@ -71,9 +71,9 @@ The offline bundle contains:
 ```
 offline-bundle/
 ├── images/
-│   └── ultimate-k8s-toolbox-v1.0.0.tar    (Docker image)
+│   └── ultimate-k8s-toolbox-v1.0.2.tar    (Docker image)
 ├── charts/
-│   └── ultimate-k8s-toolbox-0.1.0.tgz     (Helm chart)
+│   └── ultimate-k8s-toolbox-chart-1.0.2.tgz     (Helm chart)
 ├── scripts/
 │   └── deploy-offline.sh                   (Deployment script)
 ├── README.txt                              (Quick start guide)
@@ -113,8 +113,8 @@ make clean
 make offline-bundle
 
 # Output:
-# ✓ Bundle created: ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
-# -rw-r--r-- 1 user user 29M Nov 24 13:42 ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
+# ✓ Bundle created: ultimate-k8s-toolbox-offline-v1.0.2.tar.gz
+# -rw-r--r-- 1 user user 29M Nov 24 13:42 ultimate-k8s-toolbox-offline-v1.0.2.tar.gz
 ```
 
 ### Example 2: Custom Image
@@ -142,9 +142,9 @@ make info
 Output:
 
 ```
-Chart: ultimate-k8s-toolbox v0.1.0
-Bundle: v1.0.0
-Image: ubuntu:24.04
+Chart: ultimate-k8s-toolbox v1.0.2
+Bundle: v1.0.2
+Image: ultimate-k8s-toolbox:v1.0.2
 ```
 
 ### Example 4: Step-by-Step Execution
@@ -172,17 +172,17 @@ make bundle-archive
 2. **Transfer Bundle:**
    ```bash
    # Copy to USB drive
-   cp ultimate-k8s-toolbox-offline-v1.0.0.tar.gz /media/usb/
+   cp ultimate-k8s-toolbox-offline-v1.0.2.tar.gz /media/usb/
 
    # Or transfer via approved method
-   scp ultimate-k8s-toolbox-offline-v1.0.0.tar.gz user@offline-host:/tmp/
+   scp ultimate-k8s-toolbox-offline-v1.0.2.tar.gz user@offline-host:/tmp/
    ```
 
 ### On Target Machine (Offline)
 
 1. **Extract Bundle:**
    ```bash
-   tar -xzf ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
+   tar -xzf ultimate-k8s-toolbox-offline-v1.0.2.tar.gz
    cd offline-bundle
    ```
 
@@ -300,7 +300,7 @@ CHART_VERSION := 0.2.0
 
 ```bash
 # Extract and check checksums
-tar -xzf ultimate-k8s-toolbox-offline-v1.0.0.tar.gz
+tar -xzf ultimate-k8s-toolbox-offline-v1.0.2.tar.gz
 cd offline-bundle
 grep ".tar\|.tgz" MANIFEST.txt | while read sum file; do
   echo "$sum $file" | sha256sum -c -
@@ -432,6 +432,6 @@ MIT
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** November 24, 2025  
+**Version:** 1.0.2  
+**Last Updated:** March 7, 2026  
 **Makefile Version:** 1.0

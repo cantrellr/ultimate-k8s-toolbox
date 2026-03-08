@@ -474,7 +474,7 @@ metadata:
 spec:
   containers:
   - name: toolbox
-    image: ultimate-k8s-toolbox:v1.0.0
+    image: ultimate-k8s-toolbox:v1.0.2
     volumeMounts:
     - name: tls
       mountPath: /tls

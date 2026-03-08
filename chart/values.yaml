@@ -108,8 +108,8 @@ affinity: {}
 # Security context for the pod
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1000
-  fsGroup: 1000
+  runAsUser: 10000
+  fsGroup: 10000
 
 # Security context for the container
 securityContext:

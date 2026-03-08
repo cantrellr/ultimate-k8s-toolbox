@@ -3,8 +3,8 @@
 # Runtime: nerdctl + containerd
 
 CHART_NAME := ultimate-k8s-toolbox
-CHART_VERSION := 1.0.1
-BUNDLE_VERSION := v1.0.1
+CHART_VERSION := 1.0.2
+BUNDLE_VERSION := v1.0.2
 TOOLBOX_IMAGE_REPO := $(CHART_NAME)
 TOOLBOX_IMAGE_TAG := $(BUNDLE_VERSION)
 TOOLBOX_IMAGE := $(TOOLBOX_IMAGE_REPO):$(TOOLBOX_IMAGE_TAG)
@@ -639,7 +639,7 @@ create-sbom:
 	echo '      ]' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    "tools": [' >> $(BUNDLE_DIR)/SBOM.json; \
-	echo '      { "vendor": "CycloneDX", "name": "ultimate-k8s-toolbox-makefile", "version": "1.0.1" }' >> $(BUNDLE_DIR)/SBOM.json; \
+	echo '      { "vendor": "CycloneDX", "name": "ultimate-k8s-toolbox-makefile", "version": "1.0.2" }' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '    ]' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '  },' >> $(BUNDLE_DIR)/SBOM.json; \
 	echo '  "components": [' >> $(BUNDLE_DIR)/SBOM.json; \

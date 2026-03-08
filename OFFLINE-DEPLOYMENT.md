@@ -28,17 +28,17 @@ Or build from Dockerfile:
 docker build -t ultimate-k8s-toolbox:latest .
 
 # Tag with a version
-docker tag ultimate-k8s-toolbox:latest ultimate-k8s-toolbox:v1.0.0
+docker tag ultimate-k8s-toolbox:latest ultimate-k8s-toolbox:v1.0.2
 ```
 
 ### Step 2: Export the Image
 
 ```bash
 # Save the image to a tar file
-docker save ultimate-k8s-toolbox:v1.0.0 -o ultimate-k8s-toolbox-v1.0.0.tar
+docker save ultimate-k8s-toolbox:v1.0.2 -o ultimate-k8s-toolbox-v1.0.2.tar
 
 # Verify the tar file
-ls -lh ultimate-k8s-toolbox-v1.0.0.tar
+ls -lh ultimate-k8s-toolbox-v1.0.2.tar
 ```
 
 ### Step 3: Package the Helm Chart
@@ -48,7 +48,7 @@ ls -lh ultimate-k8s-toolbox-v1.0.0.tar
 cd /path/to/charts
 helm package chart/
 
-# This creates: ultimate-k8s-toolbox-chart-1.0.1.tgz
+# This creates: ultimate-k8s-toolbox-chart-1.0.2.tgz
 ```
 
 ### Step 4: Create Transfer Bundle
@@ -56,20 +56,20 @@ helm package chart/
 ```bash
 # Create a directory for all offline artifacts
 mkdir -p offline-bundle
-cp ultimate-k8s-toolbox-v1.0.0.tar offline-bundle/
-cp ultimate-k8s-toolbox-chart-1.0.1.tgz offline-bundle/
+cp ultimate-k8s-toolbox-v1.0.2.tar offline-bundle/
+cp ultimate-k8s-toolbox-chart-1.0.2.tgz offline-bundle/
 cp ultimate-k8s-toolbox/values-offline.yaml offline-bundle/
 
 # Optional: Create a manifest file
 cat > offline-bundle/manifest.txt <<EOF
 Ultimate K8s Toolbox - Offline Deployment Bundle
-Version: 1.0.0
-Chart Version: 0.1.0
+Version: 1.0.2
+Chart Version: 1.0.2
 Created: $(date)
 
 Contents:
-- ultimate-k8s-toolbox-v1.0.0.tar (Docker image)
-- ultimate-k8s-toolbox-chart-1.0.1.tgz (Helm chart)
+- ultimate-k8s-toolbox-v1.0.2.tar (Docker image)
+- ultimate-k8s-toolbox-chart-1.0.2.tgz (Helm chart)
 - values-offline.yaml (Configuration template)
 EOF
 
@@ -110,7 +110,7 @@ ls -la
 
 ```bash
 # Load the image
-docker load -i ultimate-k8s-toolbox-v1.0.0.tar
+docker load -i ultimate-k8s-toolbox-v1.0.2.tar
 
 # Verify image loaded
 docker images | grep ultimate-k8s-toolbox
@@ -120,17 +120,17 @@ docker images | grep ultimate-k8s-toolbox
 INTERNAL_REGISTRY="harbor.internal.company.com"
 PROJECT="platform"
 
-docker tag ultimate-k8s-toolbox:v1.0.0 \
-  ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:v1.0.0
+docker tag ultimate-k8s-toolbox:v1.0.2 \
+  ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:v1.0.2
 
-docker tag ultimate-k8s-toolbox:v1.0.0 \
+docker tag ultimate-k8s-toolbox:v1.0.2 \
   ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:latest
 
 # Login to internal registry
 docker login ${INTERNAL_REGISTRY}
 
 # Push to internal registry
-docker push ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:v1.0.0
+docker push ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:v1.0.2
 docker push ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:latest
 ```
 
@@ -139,8 +139,8 @@ docker push ${INTERNAL_REGISTRY}/${PROJECT}/ultimate-k8s-toolbox:latest
 ```bash
 # Load and push in one command using skopeo
 skopeo copy \
-  docker-archive:ultimate-k8s-toolbox-v1.0.0.tar \
-  docker://harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.0
+  docker-archive:ultimate-k8s-toolbox-v1.0.2.tar \
+  docker://harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.2
 ```
 
 ### Step 3: Create Registry Credentials Secret
@@ -176,7 +176,7 @@ global:
 image:
   # Image path within the registry
   repository: "platform/ultimate-k8s-toolbox"
-  tag: "v1.0.0"
+  tag: "v1.0.2"
   pullPolicy: IfNotPresent
 
 # Reference your registry secret
@@ -200,7 +200,7 @@ resources:
 
 ```bash
 # Install the chart
-helm install my-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
+helm install my-toolbox ultimate-k8s-toolbox-chart-1.0.2.tgz \
   -f values-offline.yaml \
   -n toolbox
 
@@ -235,20 +235,20 @@ Deploy to multiple namespaces with different configurations:
 
 ### Development Environment
 ```bash
-helm install dev-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
+helm install dev-toolbox ultimate-k8s-toolbox-chart-1.0.2.tgz \
   --set global.imageRegistry="harbor.internal.company.com" \
   --set image.repository="platform/ultimate-k8s-toolbox" \
-  --set image.tag="v1.0.0" \
+  --set image.tag="v1.0.2" \
   --set imagePullSecrets[0].name="regcred" \
   -n dev-tools --create-namespace
 ```
 
 ### Production Environment
 ```bash
-helm install prod-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
+helm install prod-toolbox ultimate-k8s-toolbox-chart-1.0.2.tgz \
   --set global.imageRegistry="harbor.internal.company.com" \
   --set image.repository="platform/ultimate-k8s-toolbox" \
-  --set image.tag="v1.0.0" \
+  --set image.tag="v1.0.2" \
   --set imagePullSecrets[0].name="regcred" \
   --set resources.limits.memory="8Gi" \
   --set resources.limits.cpu="4" \
@@ -257,7 +257,7 @@ helm install prod-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
 
 ### MongoDB Namespace (Reusing Existing SA)
 ```bash
-helm install mongo-toolbox ultimate-k8s-toolbox-0.1.0.tgz \
+helm install mongo-toolbox ultimate-k8s-toolbox-chart-1.0.2.tgz \
   -f values-mongodb.yaml \
   --set global.imageRegistry="harbor.internal.company.com" \
   -n mongodb
@@ -370,10 +370,10 @@ nslookup harbor.internal.company.com
 ```bash
 # Using curl
 curl -k -u username:password \
-  https://harbor.internal.company.com/v2/platform/ultimate-k8s-toolbox/manifests/v1.0.0
+  https://harbor.internal.company.com/v2/platform/ultimate-k8s-toolbox/manifests/v1.0.2
 
 # Using skopeo
-skopeo inspect docker://harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.0
+skopeo inspect docker://harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.2
 ```
 
 ---
@@ -625,7 +625,7 @@ harbor create-project platform
 
 # Push image
 docker login harbor.internal.company.com
-docker push harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.0
+docker push harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.2
 ```
 
 ### Artifactory
@@ -634,7 +634,7 @@ docker push harbor.internal.company.com/platform/ultimate-k8s-toolbox:v1.0.0
 # Create Docker repository
 # Push using Docker
 docker login artifactory.internal.company.com
-docker push artifactory.internal.company.com/docker-local/ultimate-k8s-toolbox:v1.0.0
+docker push artifactory.internal.company.com/docker-local/ultimate-k8s-toolbox:v1.0.2
 ```
 
 ### Nexus Registry
@@ -642,7 +642,7 @@ docker push artifactory.internal.company.com/docker-local/ultimate-k8s-toolbox:v
 ```bash
 # Docker hosted repository
 docker login nexus.internal.company.com:8082
-docker push nexus.internal.company.com:8082/ultimate-k8s-toolbox:v1.0.0
+docker push nexus.internal.company.com:8082/ultimate-k8s-toolbox:v1.0.2
 ```
 
 ---
@@ -655,8 +655,8 @@ Create a script to automate offline bundle creation:
 #!/bin/bash
 # create-offline-bundle.sh
 
-VERSION=${1:-v1.0.0}
-CHART_VERSION=${2:-0.1.0}
+VERSION=${1:-v1.0.2}
+CHART_VERSION=${2:-1.0.2}
 
 echo "Creating offline bundle for version $VERSION..."
 
@@ -686,7 +686,7 @@ ls -lh ultimate-k8s-toolbox-offline-${VERSION}.tar.gz
 Usage:
 ```bash
 chmod +x create-offline-bundle.sh
-./create-offline-bundle.sh v1.0.0 0.1.0
+./create-offline-bundle.sh v1.0.2 1.0.2
 ```
 
 ---

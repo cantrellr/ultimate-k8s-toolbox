@@ -29,9 +29,9 @@ global:
 image:
   # Repository path within the registry (without the registry prefix)
   # The full image will be: {global.imageRegistry}/{repository}:{tag}
-  # Example result: myregistry.local:5000/platform/ultimate-k8s-toolbox:v1.0.0
+  # Example result: myregistry.local:5000/platform/ultimate-k8s-toolbox:v1.0.2
   repository: "platform/ultimate-k8s-toolbox"
-  tag: "v1.0.0"
+  tag: "v1.0.2"
   pullPolicy: IfNotPresent
 
 # Reference the image pull secret created above
