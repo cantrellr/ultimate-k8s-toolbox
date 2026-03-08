@@ -398,7 +398,7 @@ main() {
 }
 
 main "$@"
-#CATRUSTSCRIPT
+CATRUSTSCRIPT
 RUN chmod +x /usr/local/bin/update-ca-trust.sh
 
 # ============================================================================
