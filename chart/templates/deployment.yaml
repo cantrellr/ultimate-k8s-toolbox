@@ -162,6 +162,28 @@ spec:
         {{- with .Values.container.volumeMounts }}
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      {{- if .Values.keycloakCli.enabled }}
+      - name: keycloak-cli
+        image: {{ .Values.keycloakCli.image.repository }}:{{ .Values.keycloakCli.image.tag }}
+        imagePullPolicy: {{ .Values.keycloakCli.image.pullPolicy }}
+        {{- with .Values.keycloakCli.command }}
+        command:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.keycloakCli.args }}
+        args:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      {{- end }}
       volumes:
       {{- if .Values.workspace.enabled }}
       - name: workspace

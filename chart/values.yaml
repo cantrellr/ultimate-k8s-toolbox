@@ -137,6 +137,7 @@ container:
       echo "";
       echo "Available tools:";
       echo "  - mongosh (MongoDB Shell)";
+      echo "  - kcadm.sh / kcreg.sh (Keycloak Admin CLIs)";
       echo "  - kubectl (Kubernetes CLI)";
       echo "  - tridentctl (NetApp Trident CLI)";
       echo "  - Network tools (ping, curl, wget, netcat, nslookup, dig, traceroute)";
@@ -176,6 +177,26 @@ container:
     # - name: config
     #   mountPath: /config
     #   readOnly: true
+
+# Optional Keycloak CLI sidecar for environments where rebuilding the toolbox
+# image is not available. This container includes kcadm.sh/kcreg.sh/kc.sh.
+keycloakCli:
+  enabled: false
+  image:
+    repository: "quay.io/keycloak/keycloak"
+    tag: "26.1.4"
+    pullPolicy: IfNotPresent
+  command:
+    - /bin/sh
+    - -c
+  args:
+    - |
+      echo "==========================================";
+      echo "Keycloak CLI Sidecar Ready";
+      echo "==========================================";
+      echo "Available tools: kcadm.sh, kcreg.sh, kc.sh";
+      echo "To access: kubectl -n ${POD_NAMESPACE:-default} exec -it $HOSTNAME -c keycloak-cli -- /bin/sh";
+      tail -f /dev/null
 
 # Volumes
 volumes: []

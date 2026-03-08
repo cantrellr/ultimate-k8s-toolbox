@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Keycloak CLI support in toolbox image: `kcadm.sh`, `kcreg.sh`, and `kc.sh`
+- Java runtime (`openjdk-21-jre-headless`) required by Keycloak CLI tools
+- Keycloak tooling references and quick examples in `README.md`, `QUICK-REFERENCE.md`, and `TOOLS-REFERENCE.md`
+
 ## [1.0.0] - 2025-11-26 - "First Flight" 🛫
 
 > *"The moment you doubt whether you can fly, you cease forever to be able to do it."* — J.M. Barrie

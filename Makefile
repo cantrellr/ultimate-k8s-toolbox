@@ -211,9 +211,9 @@ build-image: check-dependencies
 	@echo ""
 	@echo "Verifying installed tools..."
 	@if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then \
-		docker run --rm $(TOOLBOX_IMAGE) bash -c "mongosh --version | head -1 && kubectl version --client 2>&1 | head -1 && helm version --short && python3 --version" || true; \
+		docker run --rm $(TOOLBOX_IMAGE) bash -c "mongosh --version | head -1 && kubectl version --client 2>&1 | head -1 && helm version --short && kcadm.sh --help >/dev/null && echo 'kcadm.sh ready' && python3 --version" || true; \
 	else \
-		$(NERDCTL) --namespace $(NERDCTL_NAMESPACE) run --rm $(TOOLBOX_IMAGE) bash -c "mongosh --version | head -1 && kubectl version --client 2>&1 | head -1 && helm version --short && python3 --version" || true; \
+		$(NERDCTL) --namespace $(NERDCTL_NAMESPACE) run --rm $(TOOLBOX_IMAGE) bash -c "mongosh --version | head -1 && kubectl version --client 2>&1 | head -1 && helm version --short && kcadm.sh --help >/dev/null && echo 'kcadm.sh ready' && python3 --version" || true; \
 	fi
 	@echo ""
 	@echo "Exporting image..."
