@@ -41,6 +41,7 @@
 | 🔍 Debug pod networking issues | `tcpdump`, `netcat`, `nmap`, `dig` all pre-installed |
 | 🔐 Troubleshoot TLS/certificate problems | `openssl`, certificate verification tools, CA trust |
 | 📊 Inspect MongoDB clusters | `mongosh`, `mongodump`, `mongostat` ready to go |
+| 🛡️ Administer Keycloak realms/clients/users | `kcadm.sh`, `kcreg.sh`, `kc.sh` included |
 | ☸️ Manage Kubernetes resources | `kubectl`, `helm`, `k9s`, `stern` at your fingertips |
 | 🚫 Work in air-gapped environments | Full offline deployment support with internal registries |
 | 📋 Meet compliance requirements | SBOM generation, security scanning with `trivy` |
@@ -112,8 +113,15 @@ cd ultimate-k8s-toolbox
 # Deploy to your cluster
 helm install toolbox ./chart -n toolbox --create-namespace
 
+# Deploy with Keycloak CLI sidecar enabled
+helm install toolbox ./chart -n keycloak-system --create-namespace \
+  --set keycloakCli.enabled=true
+
 # Access the toolbox
 kubectl exec -it -n toolbox deploy/toolbox-ultimate-k8s-toolbox -- bash
+
+# Access Keycloak CLI sidecar
+kubectl exec -it -n keycloak-system deploy/toolbox-ultimate-k8s-toolbox -c keycloak-cli -- /bin/sh
 ```
 
 ### Using the Quick Access Script
@@ -161,6 +169,17 @@ toolbox
 | `aws` | 2.x | AWS CLI |
 | `az` | Latest | Azure CLI |
 | `gcloud` | Latest | Google Cloud SDK |
+
+</details>
+
+<details>
+<summary><b>🛡️ Identity & Access Tools (3)</b></summary>
+
+| Tool | Version | Description |
+|------|---------|-------------|
+| `kcadm.sh` | Keycloak 26.x | Keycloak admin CLI for realms, users, clients, roles |
+| `kcreg.sh` | Keycloak 26.x | Keycloak client registration CLI |
+| `kc.sh` | Keycloak 26.x | Keycloak distribution CLI (start/build/config help) |
 
 </details>
 

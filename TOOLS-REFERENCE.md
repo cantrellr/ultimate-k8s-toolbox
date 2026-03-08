@@ -164,7 +164,56 @@ envsubst < deployment.template.yaml > deployment.yaml
 
 ---
 
-## 🌐 Section 4: Networking Tools
+## 🛡️ Section 4: Keycloak CLI Tools
+
+By default, these tools are included when you build the toolbox image from this repository.
+If you deploy from a pre-built image, enable the Keycloak CLI sidecar with:
+
+```bash
+helm upgrade --install toolbox chart/ -n keycloak-system --create-namespace \
+  --set keycloakCli.enabled=true
+```
+
+### Tools Included
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| `kcadm.sh` | 26.1.4 | Keycloak admin CLI for realm/user/client management |
+| `kcreg.sh` | 26.1.4 | Keycloak client registration CLI |
+| `kc.sh` | 26.1.4 | Keycloak server distribution CLI |
+
+### Quick Examples
+
+```bash
+# Authenticate against Keycloak (admin user)
+kcadm.sh config credentials \
+  --server https://keycloak.example.com \
+  --realm master \
+  --user admin
+
+# List realms
+kcadm.sh get realms
+
+# List users in a realm
+kcadm.sh get users -r myrealm
+
+# Create a realm (idempotent pattern)
+kcadm.sh create realms -s realm=myrealm -s enabled=true || true
+
+# Create a client using registration CLI
+kcreg.sh config credentials \
+  --server https://keycloak.example.com \
+  --realm myrealm \
+  --user admin
+kcreg.sh create -s clientId=my-app -s publicClient=true
+
+# Show server CLI help (for Keycloak image/server operations)
+kc.sh --help
+```
+
+---
+
+## 🌐 Section 5: Networking Tools
 
 ### Tools Included
 
@@ -228,7 +277,7 @@ ss -tuln  # Modern alternative
 
 ---
 
-## 💾 Section 5: Storage + File Transfer Tools
+## 💾 Section 6: Storage + File Transfer Tools
 
 ### Tools Included
 
@@ -279,7 +328,7 @@ unzip backup.zip -d /workspace/extract/
 
 ---
 
-## 🐍 Section 6: Python Environment
+## 🐍 Section 7: Python Environment
 
 ### Packages Installed
 
@@ -336,7 +385,7 @@ EOF
 
 ---
 
-## 🛠️ Section 7: System Debugging Tools
+## 🛠️ Section 8: System Debugging Tools
 
 ### Tools Included
 
@@ -391,7 +440,7 @@ file -i /workspace/data.json  # MIME type
 
 ---
 
-## 🔐 Section 8: CA Trust Integration
+## 🔐 Section 9: CA Trust Integration
 
 ### Features
 

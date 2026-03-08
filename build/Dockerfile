@@ -139,7 +139,32 @@ RUN YQ_VERSION="v4.45.1" && \
 RUN apt-get update && apt-get install -y gettext-base && rm -rf /var/lib/apt/lists/*
 
 # ============================================================================
-# SECTION 7: Storage Tools (Trident + NFS)
+# SECTION 7: Identity & Access Management Tools (Keycloak CLI)
+# ============================================================================
+
+# Install Java runtime required by Keycloak CLI scripts
+RUN apt-get update && apt-get install -y openjdk-21-jre-headless && rm -rf /var/lib/apt/lists/*
+
+# Install Keycloak admin and registration CLIs
+RUN KEYCLOAK_VERSION="26.1.4" && \
+    wget -q "https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-${KEYCLOAK_VERSION}.tar.gz" && \
+    tar -xzf "keycloak-${KEYCLOAK_VERSION}.tar.gz" -C /opt && \
+    mv "/opt/keycloak-${KEYCLOAK_VERSION}" /opt/keycloak && \
+    ln -sf /opt/keycloak/bin/kcadm.sh /usr/local/bin/kcadm.sh && \
+    ln -sf /opt/keycloak/bin/kcreg.sh /usr/local/bin/kcreg.sh && \
+    ln -sf /opt/keycloak/bin/kc.sh /usr/local/bin/kc.sh && \
+    chmod +x /opt/keycloak/bin/*.sh && \
+    rm -f "keycloak-${KEYCLOAK_VERSION}.tar.gz"
+
+# Verify Keycloak CLI installation
+RUN kcadm.sh --help >/dev/null && \
+    kcreg.sh --help >/dev/null && \
+    kc.sh --help >/dev/null && \
+    java -version && \
+    echo "Keycloak CLI tools installed successfully"
+
+# ============================================================================
+# SECTION 8: Storage Tools (Trident + NFS)
 # ============================================================================
 
 # Install tridentctl (NetApp Trident CLI)
@@ -151,7 +176,7 @@ RUN TRIDENT_VERSION="24.10.0" && \
     rm -rf trident-installer-${TRIDENT_VERSION}.tar.gz trident-installer
 
 # ============================================================================
-# SECTION 8: Python Environment (Scripting + Automation)
+# SECTION 9: Python Environment (Scripting + Automation)
 # ============================================================================
 
 # Install Python
@@ -174,7 +199,7 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 RUN python3 --version && pip3 --version
 
 # ============================================================================
-# SECTION 9: CA Trust Integration (Enterprise Best Practice)
+# SECTION 10: CA Trust Integration (Enterprise Best Practice)
 # ============================================================================
 # Industry best practice for CA trust integration:
 # 1. Mount certificates as Kubernetes Secret/ConfigMap volume
@@ -379,7 +404,7 @@ CATRUSTSCRIPT
 RUN chmod +x /usr/local/bin/update-ca-trust.sh
 
 # ============================================================================
-# SECTION 10: User Setup + Workspace Configuration
+# SECTION 11: User Setup + Workspace Configuration
 # ============================================================================
 
 # Create a non-root user (use uid 10000 to avoid conflicts)
@@ -408,6 +433,12 @@ RUN echo '#!/bin/bash' > /usr/local/bin/show-versions.sh && \
     echo 'echo "  • helm: $(helm version --short | cut -d+ -f1)"' >> /usr/local/bin/show-versions.sh && \
     echo 'echo "  • jq: $(jq --version)"' >> /usr/local/bin/show-versions.sh && \
     echo 'echo "  • yq: $(yq --version | awk \"{print \\$3}\")"' >> /usr/local/bin/show-versions.sh && \
+    echo 'echo ""' >> /usr/local/bin/show-versions.sh && \
+    echo 'echo "🔐 KEYCLOAK CLI TOOLS:"' >> /usr/local/bin/show-versions.sh && \
+    echo 'echo "  • kcadm.sh: $(kcadm.sh --help >/dev/null 2>&1 && echo ready || echo missing)"' >> /usr/local/bin/show-versions.sh && \
+    echo 'echo "  • kcreg.sh: $(kcreg.sh --help >/dev/null 2>&1 && echo ready || echo missing)"' >> /usr/local/bin/show-versions.sh && \
+    echo 'echo "  • kc.sh: $(kc.sh --help >/dev/null 2>&1 && echo ready || echo missing)"' >> /usr/local/bin/show-versions.sh && \
+    echo 'echo "  • Java: $(java -version 2>&1 | head -1)"' >> /usr/local/bin/show-versions.sh && \
     echo 'echo ""' >> /usr/local/bin/show-versions.sh && \
     echo 'echo "🔒 TLS / X.509 TOOLS:"' >> /usr/local/bin/show-versions.sh && \
     echo 'echo "  • openssl: $(openssl version | awk \"{print \\$2}\")"' >> /usr/local/bin/show-versions.sh && \
