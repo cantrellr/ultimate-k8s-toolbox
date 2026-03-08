@@ -265,7 +265,7 @@ install_certs_from_dir() {
             local cert_name
             cert_name=$(basename "$cert")
             
-            # Validate it's a valid certificate
+            # Validate its a valid certificate
             if openssl x509 -in "$cert" -noout 2>/dev/null; then
                 # Copy with .crt extension (required by update-ca-certificates)
                 local target_name="${cert_name%.*}.crt"
@@ -400,7 +400,7 @@ main() {
 }
 
 main "$@"
-CATRUSTSCRIPT
+#CATRUSTSCRIPT
 RUN chmod +x /usr/local/bin/update-ca-trust.sh
 
 # ============================================================================
