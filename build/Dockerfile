@@ -231,8 +231,6 @@ RUN cat > /usr/local/bin/update-ca-trust.sh <<'CATRUSTSCRIPT'
 #   update-ca-trust.sh --list       # List installed custom CAs
 # =============================================================================
 
-set -e
-
 # Configuration
 CA_TARGET_DIR="/usr/local/share/ca-certificates/custom"
 PRIMARY_CA_SOURCE="${CA_CERT_DIR:-/etc/ssl/custom-ca}"
