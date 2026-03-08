@@ -55,7 +55,7 @@ kubectl create secret docker-registry regcred \
 helm install toolbox ../chart \
   --set global.imageRegistry="harbor.internal.company.com" \
   --set image.repository="platfor../chart" \
-  --set image.tag="v1.0.0" \
+  --set image.tag="v1.0.2" \
   --set imagePullSecrets[0].name="regcred" \
   -n toolbox
 
@@ -127,7 +127,7 @@ helm install staging-toolbox ../chart \
 # Production
 helm install prod-toolbox ../chart \
   --set global.imageRegistry="registry.prod.local" \
-  --set image.tag="v1.0.0" \
+  --set image.tag="v1.0.2" \
   --set replicaCount=3 \
   --set resources.limits.memory=8Gi \
   -n prod-tools --create-namespace
@@ -208,15 +208,15 @@ cat <<'CMD'
 # Package the chart
 helm package ../chart
 
-# This creates: ultimate-k8s-toolbox-chart-1.0.1.tgz
+# This creates: ultimate-k8s-toolbox-chart-1.0.2.tgz
 
 # Install from package
-helm install my-toolbox ultimate-k8s-toolbox-chart-1.0.1.tgz \
+helm install my-toolbox ultimate-k8s-toolbox-chart-1.0.2.tgz \
   -f values-offline.yaml \
   -n toolbox --create-namespace
 
 # Or install from URL (if hosted)
-helm install my-toolbox https://charts.example.co../ultimate-k8s-toolbox-chart-1.0.1.tgz \
+helm install my-toolbox https://charts.example.co../ultimate-k8s-toolbox-chart-1.0.2.tgz \
   -f values-offline.yaml \
   -n toolbox
 CMD

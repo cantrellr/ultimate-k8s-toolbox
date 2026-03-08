@@ -152,7 +152,7 @@ We follow a coordinated vulnerability disclosure process:
 
 ## Security Updates
 
-Security updates are released as patch versions (e.g., 1.0.1) and announced via:
+Security updates are released as patch versions (e.g., 1.0.2, 1.0.3) and announced via:
 
 - GitHub Releases
 - Security Advisories

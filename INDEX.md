@@ -1,6 +1,6 @@
 # 📚 Ultimate K8s Toolbox - Documentation Index
 
-**v1.0.0 "First Flight" Release**
+**v1.0.2 "First Flight" Release**
 
 > A comprehensive Kubernetes administration workstation with 50+ pre-installed tools
 
@@ -148,7 +148,7 @@ global:
 # Image settings
 image:
   repository: "ultimate-k8s-toolbox"
-  tag: "1.0.0"
+  tag: "v1.0.2"
 
 # Custom CA certificates
 customCA:
@@ -221,4 +221,4 @@ make help
 
 ---
 
-*✈️ "First Flight" Release - v1.0.0*
+*✈️ "First Flight" Release - v1.0.2*

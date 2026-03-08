@@ -136,13 +136,14 @@ helm template test ./chart -f examples/values-offline.yaml
 ### Image Resolution Logic
 The `chart/templates/_helpers.tpl` contains the critical `ultimate-k8s-toolbox.image` helper that constructs image paths:
 
-- **Online**: `image.repository:image.tag` → `ultimate-k8s-toolbox:v1.0.0`
-- **Offline**: `global.imageRegistry/image.repository:image.tag` → `harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.0`
+ 
+- **Online**: `image.repository:image.tag` → `ultimate-k8s-toolbox:v1.0.2`
+- **Offline**: `global.imageRegistry/image.repository:image.tag` → `harbor.internal.com/platform/ultimate-k8s-toolbox:v1.0.2`
 
 ### Security Context
 Default security settings in `values.yaml`:
 - `runAsNonRoot: true`
-- `runAsUser: 1000`
+- `runAsUser: 10000`
 - `allowPrivilegeEscalation: false`
 - `NET_ADMIN` and `NET_RAW` capabilities for network tools
 
@@ -183,7 +184,7 @@ sha256sum images/*.tar
 | Tool | Version |
 |------|---------|
 | mongosh | 2.3.7 |
-| MongoDB Tools | 100.10.0 |
+| MongoDB Tools | 100.13.0 |
 | kubectl | v1.31.4 |
 | yq | v4.45.1 |
 | tridentctl | 24.10.0 |
@@ -220,9 +221,9 @@ When running `make offline-bundle`, the output includes:
 ```
 dist/offline-bundle/
 ├── images/
-│   └── ultimate-k8s-toolbox-v1.0.0.tar   # Docker/OCI image
+│   └── ultimate-k8s-toolbox-v1.0.2.tar   # Docker/OCI image
 ├── charts/
-│   └── ultimate-k8s-toolbox-0.1.0.tgz    # Packaged Helm chart
+│   └── ultimate-k8s-toolbox-chart-1.0.2.tgz    # Packaged Helm chart
 ├── scripts/
 │   ├── deploy-offline.sh                  # Deployment automation (with CA support)
 │   └── import-ca-certs.sh                 # CA certificate import utility

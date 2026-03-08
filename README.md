@@ -6,7 +6,7 @@
    ║   █░█ █░░ ▀█▀ █ █▀▄▀█ ▄▀█ ▀█▀ █▀▀   █▄▀ ▄▀█ █▀   ▀█▀ █▀█ █▀█ █░░      ║
    ║   █▄█ █▄▄ ░█░ █ █░▀░█ █▀█ ░█░ ██▄   █░█ ▀▀█ ▄█   ░█░ █▄█ █▄█ █▄▄      ║
    ║                                                                       ║
-   ║              ✈️  "First Flight" Release - v1.0.0  ✈️                 ║
+  ║              ✈️  "First Flight" Release - v1.0.2  ✈️                 ║
    ╚═══════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -62,7 +62,7 @@
 │  │   │  │    INIT CONTAINER     │  │       MAIN CONTAINER           │  │  │  │
 │  │   │  │   update-ca-trust     │  │         toolbox                │  │  │  │
 │  │   │  │  ─────────────────    │  │  ────────────────────────────  │  │  │  │
-│  │   │  │  • Runs as root       │  │  • Runs as non-root (UID 1000) │  │  │  │
+│  │   │  │  • Runs as root       │  │  • Runs as non-root (UID 10000)│  │  │  │
 │  │   │  │  • Updates CA trust   │  │  • 50+ pre-installed tools     │  │  │  │
 │  │   │  │  • Copies to volume   │  │  • kubectl, helm, k9s          │  │  │  │
 │  │   │  │                       │  │  • mongosh, database clients   │  │  │  │
@@ -377,7 +377,7 @@ global:
 
 image:
   repository: "platform/ultimate-k8s-toolbox"
-  tag: "1.0.0"
+  tag: "v1.0.2"
 
 imagePullSecrets:
   - name: harbor-credentials
@@ -396,7 +396,7 @@ resources:
 
 securityContext:
   runAsNonRoot: true
-  runAsUser: 1000
+  runAsUser: 10000
 ```
 
 ---
@@ -405,7 +405,7 @@ securityContext:
 
 ### Container Security
 
-- **Non-root by default**: Runs as UID 1000
+- **Non-root by default**: Runs as UID 10000
 - **No privilege escalation**: Disabled by default
 - **Read-only root filesystem**: Supported (some tools require writeable dirs)
 - **RBAC**: Configurable cluster/namespace-scoped permissions
@@ -506,7 +506,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**✈️ "First Flight" Release v1.0.0**
+**✈️ "First Flight" Release v1.0.2**
 
 *Per aspera ad astra* — Through hardships to the stars
 
@@ -515,4 +515,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Made with ❤️ for the Kubernetes community
 
 </div>
-]]>

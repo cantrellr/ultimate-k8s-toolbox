@@ -151,4 +151,4 @@ When adding new MCP servers:
 
 ---
 
-*Part of the Ultimate K8s Toolbox project - "First Flight" v1.0.0*
+*Part of the Ultimate K8s Toolbox project - "First Flight" v1.0.2*

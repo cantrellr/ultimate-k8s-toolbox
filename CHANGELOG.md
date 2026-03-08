@@ -5,13 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.2] - 2026-03-07
 
 ### Added
 
 - Keycloak CLI support in toolbox image: `kcadm.sh`, `kcreg.sh`, and `kc.sh`
 - Java runtime (`openjdk-21-jre-headless`) required by Keycloak CLI tools
 - Keycloak tooling references and quick examples in `README.md`, `QUICK-REFERENCE.md`, and `TOOLS-REFERENCE.md`
+
+### Fixed
+
+- Dockerfile heredoc terminator for the embedded CA trust update script
+
+### Changed
+
+- Release and chart version references updated to `v1.0.2` / `1.0.2`
+- Helm chart default security context aligned to the image UID/GID (run as UID 10000)
 
 ## [1.0.0] - 2025-11-26 - "First Flight" 🛫
 
